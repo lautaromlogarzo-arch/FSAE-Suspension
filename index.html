@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LL - Dynamic Performance Systems</title>
-    <link rel="icon" href="./logo_transparente.png" type="image/png">
+    <link rel="icon" href="logo_transparente1.png" type="image/png">
 
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 
@@ -302,6 +302,66 @@
         .cb-label { display: flex; align-items: center; cursor: pointer; font-weight: bold; color: var(--primary); font-size: 0.9rem;}
         .note { font-size: 0.75rem; color: #aaa; margin-top: 4px; font-style: italic; }
         .result-block { margin-bottom: 20px; padding-bottom: 10px; }
+        /* --- RESPONSIVE DESIGN (CELULARES) --- */
+        @media screen and (max-width: 768px) {
+            /* 1. Cambiar la orientación a Columna (uno arriba del otro) */
+            #app-container-v5, 
+            #app-container-steering, 
+            #app-container-fatigue, 
+            #app-container-brakes {
+                flex-direction: column;
+                height: auto; /* Permitir scroll natural */
+                overflow-y: auto;
+            }
+
+            /* 2. Ajustar barra lateral para que ocupe todo el ancho */
+            .sidebar, 
+            .steering-panel, 
+            .fatigue-panel, 
+            .brake-panel {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 4px solid #ddd; /* Separación visual */
+                flex: none;
+                padding-bottom: 30px;
+            }
+
+            /* 3. Ajustar el contenido principal */
+            .main-content, 
+            .st-output-container {
+                width: 100%;
+                flex: none;
+                height: auto;
+                padding: 10px;
+            }
+
+            /* 4. Asegurar que los gráficos 3D tengan altura en celular */
+            .viz-container, #brake-viz-container {
+                height: 400px; 
+                width: 100%;
+            }
+
+            /* 5. Ajustar Header y Logo para pantallas chicas */
+            .brand-bar {
+                padding: 10px 15px;
+            }
+            .brand-title {
+                font-size: 1.1rem; /* Letra más chica */
+                line-height: 1.2;
+            }
+            .brand-logo {
+                height: 45px; /* Logo más chico */
+                margin-right: 10px;
+            }
+            
+            /* 6. Ajustar Scroll del menú de pestañas */
+            .google-header {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1790,5 +1850,4 @@
     setTimeout(calculateAndPlot, 800);
 </script>
 </body>
-
 </html>
