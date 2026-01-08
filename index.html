@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LL - Dynamic Performance Systems</title>
-    <link rel="icon" href="./logo_transparente1.png" type="image/png">
+    <link rel="icon" href="./logo_transparente1.png?v=3" type="image/png">
 
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 
@@ -225,7 +225,7 @@
             background: #f1f3f4;
             color: #444;
             font-weight: 600;
-            text-align: left;
+            text-align: center;
             padding: 10px;
             border-bottom: 2px solid #ddd;
         }
@@ -301,7 +301,10 @@
         .tire-inputs input { text-align: center; font-weight: bold; color: var(--dark); }
         .cb-label { display: flex; align-items: center; cursor: pointer; font-weight: bold; color: var(--primary); font-size: 0.9rem;}
         .note { font-size: 0.75rem; color: #aaa; margin-top: 4px; font-style: italic; }
-        .result-block { margin-bottom: 20px; padding-bottom: 10px; }
+        .result-block { margin-bottom: 20px; padding-bottom: 10px; text-align: center; }
+        .result-block h3 { margin: 6px 0 8px; text-align: center; }
+        .result-block table { margin: 0 auto; width: auto; }
+        .result-block table th, .result-block table td { text-align: center; padding: 6px 10px; }
         /* --- RESPONSIVE DESIGN (CELULARES) --- */
         @media screen and (max-width: 768px) {
             /* 1. Cambiar la orientación a Columna (uno arriba del otro) */
@@ -1807,7 +1810,7 @@
         const area = (Math.PI / 4) * (od**2 - id**2);
         const I = (Math.PI / 64) * (od**4 - id**4);
 
-        let html = `<div class="result-block"><h3>${title}</h3><table><tr><th>Barra</th><th>Fuerza</th><th>MPa</th><th>FS Y</th><th>FS B</th></tr>`;
+        let html = `<div class="result-block"><h3>${title}</h3><table><tr><th>Barra</th><th>Fuerza</th><th>MPa</th><th>FS FLUENCIA</th><th>FS PANDEO</th></tr>`;
 
         res.forces.forEach((f, i) => {
             const stress = (Math.abs(f) / area) / 1e6;
@@ -1850,6 +1853,4 @@
     setTimeout(calculateAndPlot, 800);
 </script>
 </body>
-
 </html>
-
