@@ -632,69 +632,108 @@
 
     <div id="app-container-damper">
         <div class="damper-panel">
-            <h2 class="st-header" style="border-bottom-color: #8e44ad;">Suspensión & Damping (Python Port)</h2>
-            
-            <div class="st-sub-header" style="color:#8e44ad;">1.1 DATOS GENERALES</div>
-            <div class="st-row"><label>Masa Total (kg):</label><input type="number" id="py_peso_total" value="350.0"></div>
-            <div class="st-row"><label>Masa No Susp (Esq):</label><input type="number" id="py_mu" value="16.0"></div>
-            <div class="st-row"><label>Dist. Ejes (m):</label><input type="number" id="py_dist_ejes" value="1.650"></div>
-            <div class="st-row"><label>Dist. CG Del (m):</label><input type="number" id="py_dist_cg_del" value="1.0"></div>
-            <div class="st-row"><label>Altura CG (m):</label><input type="number" id="py_altura_cg" value="0.30"></div>
-            <div class="st-row"><label>Ancho Vía (m):</label><input type="number" id="py_ancho_via" value="1.200"></div>
+            <h2 class="st-header" style="border-bottom-color: #8e44ad;">Simulador Suspensión (Full Car)</h2>
 
-            <div class="st-sub-header" style="color:#8e44ad;">1.2 CARGAS (G)</div>
-            <div class="st-row"><label>G Lateral:</label><input type="number" id="py_g_lat" value="1.5"></div>
-            <div class="st-row"><label>G Longitudinal:</label><input type="number" id="py_g_long" value="1.7"></div>
-
-            <div class="st-sub-header" style="color:#8e44ad;">1.3 AERO & NEUMÁTICO</div>
-            <div class="st-row"><label>Downforce Tot (N):</label><input type="number" id="py_df_total" value="0"></div>
-            <div class="st-row"><label>% Aero Front (0-1):</label><input type="number" id="py_aero_bal" value="0.45"></div>
-            <div class="st-row"><label>K Tire (N/mm):</label><input type="number" id="py_k_tire" value="100.0"></div>
-
-            <div class="st-sub-header" style="color:#8e44ad;">1.5 GEOMETRÍA PUSHROD</div>
-            <div class="st-row" style="flex-direction:column; align-items:flex-start;">
-                <label style="margin-bottom:4px; font-size:0.8rem; color:#666;">Pushrod Upright [X, Y, Z]:</label>
-                <div style="display:flex; gap:5px; width:100%;">
-                    <input type="number" id="py_pu_x" value="-0.002" step="0.001">
-                    <input type="number" id="py_pu_y" value="0.500" step="0.001">
-                    <input type="number" id="py_pu_z" value="0.175" step="0.001">
+            <div class="st-sub-header" style="color:#8e44ad; border-top: 2px solid #eee; padding-top:10px;">1. GLOBAL & PISTA</div>
+            <div class="st-row"><label>Masa Total (kg):</label><input type="number" id="gl_peso_total" value="350.0"></div>
+            <div class="st-row"><label>Dist. Ejes (m):</label><input type="number" id="gl_wb" value="1.650"></div>
+            <div class="st-row"><label>Dist. CG Del (m):</label><input type="number" id="gl_a" value="1.0"></div>
+            <div class="st-row"><label>Altura CG (m):</label><input type="number" id="gl_hcg" value="0.30"></div>
+            <div class="st-row"><label>Ancho Vía (m):</label><input type="number" id="gl_track" value="1.200"></div>
+            <div class="st-row"><label>Downforce (N):</label><input type="number" id="gl_df" value="0"></div>
+            <div class="st-row"><label>% Aero Front:</label><input type="number" id="gl_aero_bal" value="0.45" step="0.01"></div>
+            <div class="st-row"><label>G Lat / Long:</label>
+                <div class="coord-inputs">
+                    <input type="number" id="gl_g_lat" value="1.5">
+                    <input type="number" id="gl_g_long" value="1.7">
                 </div>
             </div>
-            <div class="st-row" style="flex-direction:column; align-items:flex-start; margin-top:5px;">
-                <label style="margin-bottom:4px; font-size:0.8rem; color:#666;">Pushrod Rocker [X, Y, Z]:</label>
-                <div style="display:flex; gap:5px; width:100%;">
-                    <input type="number" id="py_pr_x" value="-0.002" step="0.001">
-                    <input type="number" id="py_pr_y" value="0.250" step="0.001">
-                    <input type="number" id="py_pr_z" value="0.400" step="0.001">
+            
+            <div class="st-sub-header" style="color:#555; font-size:0.8rem;">CONFIGURACIÓN PISTA</div>
+            <div class="st-row"><label>Vel. Auto (m/s):</label><input type="number" id="tr_v_car" value="15.0"></div>
+            <div class="st-row"><label>Bache Alt/Lar (m):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="tr_h_bache" value="0.05" step="0.01">
+                    <input type="number" id="tr_l_bache" value="0.50" step="0.1">
                 </div>
             </div>
-            <div class="st-row"><label>Brazo Pushrod (m):</label><input type="number" id="py_b_push" value="0.100"></div>
-            <div class="st-row"><label>Brazo Damper (m):</label><input type="number" id="py_b_damp" value="0.100"></div>
-            <div class="st-row"><label>Brazo ARB (m):</label><input type="number" id="py_b_arb" value="0.080"></div>
+            <div class="st-row"><label>Piano Alt/Pitch:</label>
+                <div class="coord-inputs">
+                    <input type="number" id="tr_h_piano" value="0.04" step="0.01">
+                    <input type="number" id="tr_pitch" value="0.10" step="0.01">
+                </div>
+            </div>
+            <div class="st-row"><label>Piano L.Diente:</label><input type="number" id="tr_l_diente" value="0.08" step="0.01"></div>
 
-            <div class="st-sub-header" style="color:#8e44ad;">1.6 RESORTE & ARB</div>
-            <div class="st-row"><label>K Resorte (lbs/in):</label><input type="number" id="py_k_lbs" value="300"></div>
-            <div class="st-row"><label>L. Libre (mm):</label><input type="number" id="py_l_free" value="120.0"></div>
-            <div class="st-row"><label>L. Sólido (mm):</label><input type="number" id="py_l_solid" value="60.0"></div>
-            
-            <div class="st-row"><label>G Material (GPa):</label><input type="number" id="py_arb_g" value="80"></div>
-            <div class="st-row"><label>ARB Ancho (m):</label><input type="number" id="py_arb_ancho" value="0.300"></div>
-            <div class="st-row"><label>ARB Brazo (m):</label><input type="number" id="py_arb_brazo" value="0.100"></div>
-            <div class="st-row"><label>ARB OD (mm):</label><input type="number" id="py_arb_od" value="15.0"></div>
-            <div class="st-row"><label>ARB ID (mm):</label><input type="number" id="py_arb_id" value="0.0"></div>
+            <div class="st-sub-header" style="color:#2980b9; border-top: 2px solid #eee; padding-top:10px;">2. EJE DELANTERO</div>
+            <div class="st-row"><label>Masa No Susp (Esq):</label><input type="number" id="fr_mu" value="16.0"></div>
+            <div class="st-row"><label>K Tire (N/mm):</label><input type="number" id="fr_ktire" value="100.0"></div>
+            <div class="st-row"><label>K Resorte (lbs/in):</label><input type="number" id="fr_kspring" value="300"></div>
+            <div class="st-row"><label>L. Libre / Solido:</label>
+                <div class="coord-inputs">
+                    <input type="number" id="fr_lfree" value="120">
+                    <input type="number" id="fr_lsolid" value="60">
+                </div>
+            </div>
+            <div class="st-row"><label>Geom MR (Push/Damp):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="fr_b_push" value="0.10">
+                    <input type="number" id="fr_b_damp" value="0.10">
+                </div>
+            </div>
+            <div class="st-row"><label>Delta Z (Rocker-Up):</label><input type="number" id="fr_dz" value="0.225" step="0.001"></div>
+            <div class="st-row"><label>ARB OD/ID (mm):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="fr_arb_od" value="15">
+                    <input type="number" id="fr_arb_id" value="0">
+                </div>
+            </div>
+            <div class="st-row"><label>ARB Brazo (m):</label><input type="number" id="fr_arb_brazo" value="0.10"></div>
+            <div class="st-row"><label>Damping Zeta (R/C):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="fr_zeta_reb" value="0.70" step="0.05">
+                    <input type="number" id="fr_zeta_comp" value="0.35" step="0.05">
+                </div>
+            </div>
 
-            <div class="st-sub-header" style="color:#8e44ad;">1.7 OBJETIVOS</div>
-            <div class="st-row"><label>Zeta Target:</label><input type="number" id="py_zeta" value="0.7"></div>
-            <div class="st-row"><label>Vel. Knee (m/s):</label><input type="number" id="py_v_knee" value="0.05"></div>
-            <div class="st-row"><label>V Max Plot (m/s):</label><input type="number" id="py_v_max" value="0.30"></div>
+            <div class="st-sub-header" style="color:#c0392b; border-top: 2px solid #eee; padding-top:10px;">3. EJE TRASERO</div>
+            <div class="st-row"><label>Masa No Susp (Esq):</label><input type="number" id="rr_mu" value="18.0"></div>
+            <div class="st-row"><label>K Tire (N/mm):</label><input type="number" id="rr_ktire" value="100.0"></div>
+            <div class="st-row"><label>K Resorte (lbs/in):</label><input type="number" id="rr_kspring" value="450"></div>
+            <div class="st-row"><label>L. Libre / Solido:</label>
+                <div class="coord-inputs">
+                    <input type="number" id="rr_lfree" value="140">
+                    <input type="number" id="rr_lsolid" value="70">
+                </div>
+            </div>
+            <div class="st-row"><label>Geom MR (Push/Damp):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="rr_b_push" value="0.10">
+                    <input type="number" id="rr_b_damp" value="0.11">
+                </div>
+            </div>
+            <div class="st-row"><label>Delta Z (Rocker-Up):</label><input type="number" id="rr_dz" value="0.225" step="0.001"></div>
+            <div class="st-row"><label>ARB OD/ID (mm):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="rr_arb_od" value="12">
+                    <input type="number" id="rr_arb_id" value="0">
+                </div>
+            </div>
+            <div class="st-row"><label>ARB Brazo (m):</label><input type="number" id="rr_arb_brazo" value="0.12"></div>
+            <div class="st-row"><label>Damping Zeta (R/C):</label>
+                <div class="coord-inputs">
+                    <input type="number" id="rr_zeta_reb" value="0.75" step="0.05">
+                    <input type="number" id="rr_zeta_comp" value="0.40" step="0.05">
+                </div>
+            </div>
 
-            <button class="st-btn damper-btn" onclick="runDamperCalc()">CALCULAR (PYTHON LOGIC)</button>
+            <button class="st-btn damper-btn" onclick="runDamperCalc()">EJECUTAR SIMULACIÓN</button>
         </div>
 
         <div class="st-output-container" id="damper-output" style="display:flex; flex-direction:column; gap:20px;">
-             <div style="text-align:center; margin-top:50px; color:#999;">
+            <div style="text-align:center; margin-top:50px; color:#999;">
                 <h3>Esperando cálculo...</h3>
-                <p>Presiona CALCULAR para ejecutar la lógica portada de Python.</p>
+                <p>Presiona EJECUTAR SIMULACIÓN para ver los resultados del Full Car.</p>
             </div>
         </div>
     </div>
@@ -1933,288 +1972,448 @@
     }
 
     // ==========================================
-    // LOGICA PORTADA DE PYTHON (FSAE DAMPER) - VERSIÓN VISUAL
+    // LOGICA PORTADA DE PYTHON (FSAE FULL CAR DAMPER)
     // ==========================================
     
-    // Función auxiliar para inputs
-    const py_val = (id) => parseFloat(document.getElementById(id).value) || 0;
+    // Helper para leer inputs de forma segura
+    const d_val = (id) => parseFloat(document.getElementById(id).value) || 0;
 
     function runDamperCalc() {
-        // --- 1. LEER INPUTS (IGUAL QUE ANTES) ---
-        const peso_total_kg = py_val('py_peso_total');
-        const mu_kg = py_val('py_mu');
-        const dist_ejes_m = py_val('py_dist_ejes');
-        const dist_cg_del_m = py_val('py_dist_cg_del');
-        const altura_cg_m = py_val('py_altura_cg');
-        const ancho_via_m = py_val('py_ancho_via');
+        const outputDiv = document.getElementById('damper-output');
+        outputDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#333;">Calculando simulación transitoria (RK4)...<br>Esto puede tomar unos instantes.</div>';
 
-        const g_lat = py_val('py_g_lat');
-        const g_long = py_val('py_g_long');
-        const g_gravedad = 9.81;
+        // 1. LEER INPUTS GLOBALES
+        const vehiculo = {
+            peso_total_kg: d_val('gl_peso_total'),
+            dist_ejes_m: d_val('gl_wb'),
+            dist_cg_del_m: d_val('gl_a'),
+            altura_cg_m: d_val('gl_hcg'),
+            ancho_via_m: d_val('gl_track'),
+            downforce_total_N: d_val('gl_df'),
+            aero_bal_front_pct: d_val('gl_aero_bal'),
+            g_lat: d_val('gl_g_lat'),
+            g_long: d_val('gl_g_long'),
+            g_gravedad: 9.81
+        };
 
-        const downforce_total_N = py_val('py_df_total');
-        const aero_bal_front_pct = py_val('py_aero_bal');
+        // Inputs Pista
+        const track = {
+            v_car: d_val('tr_v_car'),
+            h_bache: d_val('tr_h_bache'),
+            l_bache: d_val('tr_l_bache'),
+            h_piano: d_val('tr_h_piano'),
+            pitch: d_val('tr_pitch'),
+            l_diente: d_val('tr_l_diente')
+        };
 
-        const k_tire_input = py_val('py_k_tire'); // N/mm
+        // 2. LEER INPUTS EJE DELANTERO
+        const front_inputs = {
+            mu_kg: d_val('fr_mu'),
+            k_tire_input: d_val('fr_ktire'),
+            k_resorte_lbs_in: d_val('fr_kspring'),
+            resorte_l_libre_mm: d_val('fr_lfree'),
+            resorte_l_solido_mm: d_val('fr_lsolid'),
+            brazo_pushrod_m: d_val('fr_b_push'),
+            brazo_damper_m: d_val('fr_b_damp'),
+            delta_z_m: d_val('fr_dz'), 
+            arb_od_mm: d_val('fr_arb_od'),
+            arb_id_mm: d_val('fr_arb_id'),
+            arb_brazo_m: d_val('fr_arb_brazo'),
+            zeta_reb: d_val('fr_zeta_reb'),
+            zeta_comp: d_val('fr_zeta_comp'),
+            color: '#2980b9'
+        };
 
-        const p_pushrod_upright = [py_val('py_pu_x'), py_val('py_pu_y'), py_val('py_pu_z')];
-        const p_pushrod_rocker  = [py_val('py_pr_x'), py_val('py_pr_y'), py_val('py_pr_z')];
+        // 3. LEER INPUTS EJE TRASERO
+        const rear_inputs = {
+            mu_kg: d_val('rr_mu'),
+            k_tire_input: d_val('rr_ktire'),
+            k_resorte_lbs_in: d_val('rr_kspring'),
+            resorte_l_libre_mm: d_val('rr_lfree'),
+            resorte_l_solido_mm: d_val('rr_lsolid'),
+            brazo_pushrod_m: d_val('rr_b_push'),
+            brazo_damper_m: d_val('rr_b_damp'),
+            delta_z_m: d_val('rr_dz'),
+            arb_od_mm: d_val('rr_arb_od'),
+            arb_id_mm: d_val('rr_arb_id'),
+            arb_brazo_m: d_val('rr_arb_brazo'),
+            zeta_reb: d_val('rr_zeta_reb'),
+            zeta_comp: d_val('rr_zeta_comp'),
+            color: '#c0392b'
+        };
 
-        const brazo_pushrod_m = py_val('py_b_push');
-        const brazo_damper_m = py_val('py_b_damp');
-        const brazo_arb_m = py_val('py_b_arb');
+        // 4. EJECUTAR CALCULOS ESTATICOS
+        const res_f = calcularDinamicaEjeJS(front_inputs, vehiculo, true);
+        const res_r = calcularDinamicaEjeJS(rear_inputs, vehiculo, false);
+        const balance = calcularBalanceJS(res_f, res_r, vehiculo);
 
-        const k_resorte_lbs_in = py_val('py_k_lbs');
-        const resorte_l_libre_mm = py_val('py_l_free');
-        const resorte_l_solido_mm = py_val('py_l_solid');
-
-        const G_material = py_val('py_arb_g') * 1e9; // GPa -> Pa
-        const arb_ancho_m = py_val('py_arb_ancho');
-        const arb_brazo_m = py_val('py_arb_brazo');
-        const arb_d_ext_m = py_val('py_arb_od') / 1000;
-        const arb_d_int_m = py_val('py_arb_id') / 1000;
-
-        const zeta_target = py_val('py_zeta');
-        const v_knee_vel = py_val('py_v_knee');
-        const v_max_plot = py_val('py_v_max');
-
-        // --- 2. CÁLCULOS (LÓGICA PYTHON PORTADA) ---
-
-        // 2.1 Masas y Aero
-        const masa_suspendida_total = peso_total_kg - (4 * mu_kg);
-        const ms = masa_suspendida_total / 4; 
+        // 5. GENERAR HTML DE REPORTES (Estructura Solicitada con color forzado)
+        let html = '';
         
-        const downforce_front = downforce_total_N * aero_bal_front_pct;
-        const downforce_por_rueda = downforce_front / 2;
+        // Fila 1: Reportes de Texto (Izquierda y Derecha)
+        html += '<div style="display:flex; flex-wrap:wrap; gap:20px;">';
+        html += '<div style="flex:1; min-width:350px;">' + generarReporteTexto(res_f, "EJE DELANTERO", "#2980b9") + '</div>';
+        html += '<div style="flex:1; min-width:350px;">' + generarReporteTexto(res_r, "EJE TRASERO", "#c0392b") + '</div>';
+        html += '</div>';
 
-        // 2.2 Conversiones
-        const k_tire = k_tire_input * 1000; // N/m
-        const k_resorte = k_resorte_lbs_in * 175.127; // N/m
+        // Fila 2: Balance
+        html += '<div style="margin-top:20px;">' + generarReporteBalance(balance) + '</div>';
 
-        // 2.3 Motion Ratios
-        const vec_pr = [
-            p_pushrod_rocker[0] - p_pushrod_upright[0],
-            p_pushrod_rocker[1] - p_pushrod_upright[1],
-            p_pushrod_rocker[2] - p_pushrod_upright[2]
-        ];
-        const longitud_pr = Math.sqrt(vec_pr[0]**2 + vec_pr[1]**2 + vec_pr[2]**2);
-        const factor_angulo = Math.abs(vec_pr[2]) / longitud_pr;
+        // Fila 3: Gráficos
+        html += `
+            <div class="st-card" style="margin-top:20px; color:#000;">
+                <h3 style="border-bottom:none; color:#000;">Análisis Gráfico</h3>
+                
+                <div id="chart-fv" style="width:100%; height:400px; margin-bottom:30px;"></div>
 
-        const mr_damper = factor_angulo * (brazo_damper_m / brazo_pushrod_m);
-        const mr_arb = factor_angulo * (brazo_arb_m / brazo_pushrod_m);
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                    
+                    <div style="flex:1; min-width:350px; border-right:1px solid #eee; padding-right:10px;">
+                        <h4 style="text-align:center; color:#2980b9; border-bottom:2px solid #2980b9;">EJE DELANTERO</h4>
+                        <div id="chart-trans-f" style="height:300px; margin-bottom:15px;"></div>
+                        <div id="chart-grip-f" style="height:300px; margin-bottom:15px;"></div>
+                        <div id="chart-photo-f" style="height:300px;"></div>
+                    </div>
 
-        // 2.4 Stiffness Efectivos
-        const kw_spring = k_resorte * (mr_damper**2);
+                    <div style="flex:1; min-width:350px; padding-left:10px;">
+                        <h4 style="text-align:center; color:#c0392b; border-bottom:2px solid #c0392b;">EJE TRASERO</h4>
+                        <div id="chart-trans-r" style="height:300px; margin-bottom:15px;"></div>
+                        <div id="chart-grip-r" style="height:300px; margin-bottom:15px;"></div>
+                        <div id="chart-photo-r" style="height:300px;"></div>
+                    </div>
 
-        // Rigidez ARB
-        const J = Math.PI * (Math.pow(arb_d_ext_m, 4) - Math.pow(arb_d_int_m, 4)) / 32;
-        const k_torsion = (G_material * J) / arb_ancho_m;
-        const k_arb_lineal = k_torsion / (arb_brazo_m**2);
-        const kw_arb = k_arb_lineal * (mr_arb**2);
+                </div>
+            </div>
+        `;
+        
+        outputDiv.innerHTML = html;
 
-        // 2.5 Cargas Verticales
-        const f_static = (ms * g_gravedad) + downforce_por_rueda;
+        // 6. SIMULACION Y GRAFICOS
+        setTimeout(() => {
+            // Plot Comparativa FV
+            plotFvComparativo(res_f, res_r);
 
-        // Transferencia Longitudinal
-        const transfer_long = (peso_total_kg * g_long * g_gravedad * altura_cg_m) / dist_ejes_m;
-        const delta_f_brake = transfer_long / 2;
+            // Funciones de Pista
+            const roadBache = (t) => {
+                const v = track.v_car;
+                const T = track.l_bache / v; 
+                return (t >= 0 && t <= T) ? (track.h_bache/2)*(1 - Math.cos(2*Math.PI*t/T)) : 0;
+            };
+            
+            const roadPiano = (t) => {
+                const v = track.v_car;
+                let x = v * t;
+                return (x % track.pitch <= track.l_diente) ? (track.h_piano/2)*(1 - Math.cos(2*Math.PI*(x%track.pitch)/track.l_diente)) : 0;
+            };
 
-        // Transferencia Lateral
-        const masa_eje_del = peso_total_kg * ((dist_ejes_m - dist_cg_del_m) / dist_ejes_m);
-        const transfer_lat = (masa_eje_del * g_lat * g_gravedad * altura_cg_m) / ancho_via_m;
-        const delta_f_corner = transfer_lat;
+            // Ejecutar Simulaciones
+            const sim_f_bache = runRK4(res_f, roadBache, 1.0);
+            const sim_f_piano = runRK4(res_f, roadPiano, 1.0);
+            const sim_r_bache = runRK4(res_r, roadBache, 1.0);
+            const sim_r_piano = runRK4(res_r, roadPiano, 1.0);
 
-        const f_total_rueda = f_static + delta_f_brake + delta_f_corner;
+            // GRAFICOS EJE DELANTERO
+            plotTransitorio(sim_f_bache, sim_f_piano, 'chart-trans-f', 'Transitorio (Damper)', res_f.color);
+            plotGrip(sim_f_piano, res_f, 'chart-grip-f', 'Grip Neumático (Piano)');
+            plotPhotoStyle(sim_f_bache, res_f, 'chart-photo-f', 'Carga Neumático (Bache)');
 
-        // Fuerza real transmitida a la suspensión
-        const f_suspension = f_total_rueda * (kw_spring / (kw_spring + k_tire));
+            // GRAFICOS EJE TRASERO
+            plotTransitorio(sim_r_bache, sim_r_piano, 'chart-trans-r', 'Transitorio (Damper)', res_r.color);
+            plotGrip(sim_r_piano, res_r, 'chart-grip-r', 'Grip Neumático (Piano)');
+            plotPhotoStyle(sim_r_bache, res_r, 'chart-photo-r', 'Carga Neumático (Bache)');
 
-        // Fuerza en el amortiguador
-        const f_damper_total = f_suspension / mr_damper;
+        }, 100);
+    }
 
-        // 2.6 Deflexiones
-        const travel_static_wheel = f_static / kw_spring;
-        const travel_dynamic_wheel = (delta_f_brake / kw_spring) + (delta_f_corner / (kw_spring + kw_arb));
-        const travel_total_wheel = travel_static_wheel + travel_dynamic_wheel;
-        const travel_damper_mm = travel_total_wheel * mr_damper * 1000;
+    // --- FUNCIONES MATEMATICAS Y SOLVER (PORTADO DE PYTHON) ---
 
-        // Coil Bind
-        const compresion_resorte_mm = travel_damper_mm;
-        const largo_resorte_cargado = resorte_l_libre_mm - compresion_resorte_mm;
-        const margen_bloqueo = largo_resorte_cargado - resorte_l_solido_mm;
+    function calcularDinamicaEjeJS(inp, veh, isFront) {
+        // Masa Suspendida
+        const mu_del_ref = d_val('fr_mu');
+        const mu_tra_ref = d_val('rr_mu');
+        const m_susp_total = veh.peso_total_kg - (2*mu_del_ref) - (2*mu_tra_ref);
+        
+        let weight_frac, df_share;
+        if(isFront) {
+            weight_frac = (veh.dist_ejes_m - veh.dist_cg_del_m) / veh.dist_ejes_m;
+            df_share = veh.downforce_total_N * veh.aero_bal_front_pct;
+        } else {
+            weight_frac = veh.dist_cg_del_m / veh.dist_ejes_m;
+            df_share = veh.downforce_total_N * (1 - veh.aero_bal_front_pct);
+        }
+        
+        const ms = (m_susp_total * weight_frac) / 2;
+        const df_wheel = df_share / 2;
 
-        // 2.7 Frecuencias y Amortiguación
+        // Motion Ratios
+        const l_pr_estimated = Math.sqrt(inp.brazo_pushrod_m**2 + inp.delta_z_m**2); 
+        const factor_ang = Math.abs(inp.delta_z_m) / l_pr_estimated;
+        
+        const mr_damper = factor_ang * (inp.brazo_damper_m / inp.brazo_pushrod_m);
+        const mr_arb = factor_ang * (inp.arb_brazo_m / inp.brazo_pushrod_m); 
+
+        // Rates
+        const k_tire = inp.k_tire_input * 1000;
+        const k_spring = inp.k_resorte_lbs_in * 175.127;
+        const kw_spring = k_spring * (mr_damper**2);
+
+        // ARB Stiffness
+        const J = (Math.PI * (Math.pow(inp.arb_od_mm/1000, 4) - Math.pow(inp.arb_id_mm/1000, 4))) / 32;
+        const G = 80e9; 
+        const k_torsion = (G * J) / 0.300; 
+        const k_arb_lin = k_torsion / (inp.arb_brazo_m**2);
+        const kw_arb = k_arb_lin * (mr_arb**2);
+
+        // Cargas Estáticas
+        const f_static = (ms * veh.g_gravedad) + df_wheel;
+        
+        // Transferencias
+        const trans_long_tot = (veh.peso_total_kg * veh.g_long * veh.g_gravedad * veh.altura_cg_m) / veh.dist_ejes_m;
+        const delta_f_brake_dim = (trans_long_tot * weight_frac)/2; 
+        
+        const trans_lat = (2 * (ms + inp.mu_kg) * veh.g_lat * veh.g_gravedad * veh.altura_cg_m) / veh.ancho_via_m;
+        const delta_f_corner = trans_lat;
+
+        const f_total = f_static + delta_f_brake_dim + delta_f_corner; 
+        
+        const f_susp = f_total * (kw_spring / (kw_spring + k_tire));
+        const f_damp = f_susp / mr_damper;
+
+        // Recorridos
+        const tr_static = f_static / kw_spring;
+        const tr_dyn = (delta_f_brake_dim/kw_spring) + (delta_f_corner/kw_spring);
+        const tr_total_wheel = tr_static + tr_dyn;
+        const tr_damp_mm = tr_total_wheel * mr_damper * 1000;
+        const margen_coil = (inp.resorte_l_libre_mm - tr_damp_mm) - inp.resorte_l_solido_mm;
+
+        // Frecuencias
         const k_ride = (kw_spring * k_tire) / (kw_spring + k_tire);
         const wn = Math.sqrt(k_ride / ms);
         const fn = wn / (2 * Math.PI);
 
-        const c_crit_wheel = 2 * Math.sqrt(kw_spring * ms);
-        const c_crit_damper = c_crit_wheel / (mr_damper**2);
-        const c_obj = c_crit_damper * zeta_target;
+        // Damping Coefficients (Shaft)
+        const c_crit = 2 * Math.sqrt(k_ride * ms);
+        const c_reb = (inp.zeta_reb * c_crit) / (mr_damper**2);
+        const c_comp = (inp.zeta_comp * c_crit) / (mr_damper**2);
 
-        // --- 3. GENERACIÓN DE REPORTE VISUAL (HTML LIMPIO) ---
+        return {
+            ms, mu: inp.mu_kg, mr_damper, kw_spring, kw_arb, k_tire, k_ride, fn,
+            f_damp, tr_damp_mm, margen_coil, c_reb, c_comp,
+            f_total, color: inp.color
+        };
+    }
+
+    function calcularBalanceJS(f, r, veh) {
+        const kroll_f = ((f.kw_spring + f.kw_arb) * veh.ancho_via_m**2) / 2;
+        const kroll_r = ((r.kw_spring + r.kw_arb) * veh.ancho_via_m**2) / 2;
+        const kroll_tot = kroll_f + kroll_r;
+        const dist_f = kroll_f / kroll_tot;
         
-        // Determinar estado del resorte para etiquetas (badges)
-        let coilBadge = "";
-        let coilText = "";
-        if(margen_bloqueo < 5) {
-            coilBadge = "badge-danger"; coilText = "RIESGO COIL BIND";
-        } else if(margen_bloqueo < 15) {
-            coilBadge = "badge-warning"; coilText = "PRECAUCIÓN";
-        } else {
-            coilBadge = "badge-safe"; coilText = "OK";
-        }
+        let diag = "Balance NEUTRAL";
+        if(dist_f > 0.55) diag = "Tendencia SUBVIRAJE (Front Stiff)";
+        if(dist_f < 0.45) diag = "Tendencia SOBREVIRAJE (Rear Stiff)";
 
-        let html = '';
+        return { kroll_f, kroll_r, kroll_tot, dist_f, diag, 
+                 k_spr_f: (f.kw_spring*veh.ancho_via_m**2)/2, k_arb_f: (f.kw_arb*veh.ancho_via_m**2)/2, 
+                 k_spr_r: (r.kw_spring*veh.ancho_via_m**2)/2, k_arb_r: (r.kw_arb*veh.ancho_via_m**2)/2 };
+    }
 
-        // Tarjeta 1: Datos Generales
-        html += `<div class="st-card"><h3>1. Resultados Generales</h3>`;
-        html += `<div class="st-stats-grid">
-            <div class="st-stat-box"><span class="st-stat-label">Masa Susp. (Esq)</span><span class="st-stat-value">${ms.toFixed(1)} kg</span></div>
-            <div class="st-stat-box info"><span class="st-stat-label">Motion Ratio</span><span class="st-stat-value">${mr_damper.toFixed(3)}</span></div>
-            <div class="st-stat-box success"><span class="st-stat-label">Frecuencia Nat.</span><span class="st-stat-value">${fn.toFixed(2)} Hz</span></div>
-            <div class="st-stat-box"><span class="st-stat-label">Downforce (Esq)</span><span class="st-stat-value">${downforce_por_rueda.toFixed(0)} N</span></div>
-        </div></div>`;
+    // --- GENERADORES HTML REPORTES (CORREGIDO PARA TEXTO NEGRO) ---
 
-        // Tarjeta 2: Fuerzas y Rigidez
-        html += `<div class="st-card"><h3>2. Fuerzas y Rigideces</h3>`;
-        html += `<table class="st-table">
-            <thead><tr><th>Parámetro</th><th>Valor</th><th>Unidad</th></tr></thead>
-            <tbody>
-                <tr><td>Fuerza en Rueda (Total)</td><td><b>${f_total_rueda.toFixed(0)}</b></td><td>N</td></tr>
-                <tr><td>Fuerza en Suspensión</td><td style="color:var(--primary); font-weight:bold;">${f_suspension.toFixed(0)}</td><td>N</td></tr>
-                <tr><td><b>Fuerza en Amortiguador</b></td><td style="color:var(--primary); font-weight:bold; font-size:1.1em;">${f_damper_total.toFixed(0)}</td><td>N</td></tr>
-                <tr><td colspan="3" style="border-bottom:none; height:10px;"></td></tr>
-                <tr><td>Spring Rate (Rueda)</td><td>${(kw_spring/1000).toFixed(2)}</td><td>N/mm</td></tr>
-                <tr><td>Ride Rate (Total)</td><td>${(k_ride/1000).toFixed(2)}</td><td>N/mm</td></tr>
-            </tbody>
-        </table></div>`;
-
-        // Tarjeta 3: Recorridos y Seguridad
-        html += `<div class="st-card"><h3>3. Recorridos y Estado Resorte</h3>`;
-        html += `<div class="st-stats-grid">
-            <div class="st-stat-box"><span class="st-stat-label">Recorrido Rueda</span><span class="st-stat-value">${(travel_total_wheel*1000).toFixed(1)} mm</span></div>
-            <div class="st-stat-box"><span class="st-stat-label">Recorrido Damper</span><span class="st-stat-value">${travel_damper_mm.toFixed(1)} mm</span></div>
-            <div class="st-stat-box ${margen_bloqueo < 15 ? 'warning' : ''}"><span class="st-stat-label">Margen Bloqueo</span><span class="st-stat-value">${margen_bloqueo.toFixed(1)} mm</span></div>
-        </div>
-        <div style="margin-top:10px; text-align:center;">
-            <span style="font-size:0.9rem; color:#666;">Estado del Resorte: </span>
-            <span class="badge ${coilBadge}" style="font-size:1rem; padding: 5px 10px;">${coilText}</span>
-        </div>
-        </div>`;
-        
-        // Contenedores para Gráficos
-        html += `<div class="st-card"><h3>4. Curva de Amortiguación</h3>
-                 <div id="damper-chart-curve" style="width:100%; height:400px;"></div></div>`;
-        
-        html += `<div class="st-card"><h3>5. Validación Dinámica (Simulación)</h3>
-                 <div id="damper-chart-sim" style="width:100%; height:400px;"></div></div>`;
-
-        // INYECTAR HTML
-        document.getElementById('damper-output').innerHTML = html;
-
-        // --- 4. GRAFICAR (LOGICA PLOTLY) ---
-        
-        // 4.1 Gráfico Amortiguación
-        const v_steps = 50;
-        const vel_data = []; 
-        const f_lin_data = [];
-        const f_digr_data = [];
-
-        for(let i=0; i<=v_steps; i++){
-            let v = (i/v_steps) * v_max_plot;
-            let v_mm = v * 1000;
-            vel_data.push(v_mm);
+    function generarReporteTexto(res, titulo, color) {
+        return `
+        <div class="st-card" style="border-top: 4px solid ${color};">
+            <h3 style="color:${color}; text-align:center; border-bottom:1px solid #ddd;">${titulo}</h3>
             
-            // Lineal
-            f_lin_data.push(c_obj * v);
+            <div style="font-family: 'Segoe UI', sans-serif; font-size:0.85rem; color:#333;">
+                <div style="text-align:center; font-weight:bold; margin-bottom:8px; color:#444;">ESPECIFICACIÓN VALVING (Dyno)</div>
+                
+                <table class="st-table" style="margin-bottom: 10px;">
+                    <tr><td style="font-weight:600;">Coef. Rebound:</td><td style="text-align:right; font-weight:bold;">${res.c_reb.toFixed(1)} Ns/m</td></tr>
+                    <tr><td style="font-weight:600;">Coef. Comp:</td><td style="text-align:right; font-weight:bold;">${res.c_comp.toFixed(1)} Ns/m</td></tr>
+                </table>
+                
+                <div style="background:#f1f3f4; padding:8px; border-radius:4px; font-size:0.8rem; color:#555; text-align:center; border:1px solid #e0e0e0;">
+                   LOW SPEED (A) (2 in/s): Reb ${ (res.c_reb*0.051).toFixed(0) } N | Comp ${ (res.c_comp*0.051).toFixed(0) } N<br>
+                   HIGH SPEED (B) (10 in/s): Reb ${ (res.c_reb*0.254).toFixed(0) } N | Comp ${ (res.c_comp*0.254).toFixed(0) } N
+                </div>
+                
+                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                
+                <div style="text-align:center; font-weight:bold; margin-bottom:8px; color:#444;">DINÁMICA (Carga Extrema)</div>
+                <table class="st-table">
+                    <tr><td>Masa Susp (Esq):</td><td style="text-align:right">${res.ms.toFixed(1)} kg</td></tr>
+                    <tr><td>Motion Ratio:</td><td style="text-align:right">${res.mr_damper.toFixed(3)}</td></tr>
+                    <tr><td>Frec. Natural:</td><td style="text-align:right; color:${color}; font-weight:bold;">${res.fn.toFixed(2)} Hz</td></tr>
+                    <tr><td>Spring Rate (W):</td><td style="text-align:right">${(res.kw_spring/1000).toFixed(2)} N/mm</td></tr>
+                    <tr><td>Recorrido Damper:</td><td style="text-align:right">${res.tr_damp_mm.toFixed(1)} mm</td></tr>
+                    <tr><td>Margen Coil Bind:</td><td style="text-align:right; font-weight:bold; color:${res.margen_coil<5?'#c0392b':'#27ae60'}">${res.margen_coil.toFixed(1)} mm</td></tr>
+                </table>
+            </div>
+        </div>`;
+    }
 
-            // Digresiva
-            if(v < v_knee_vel) {
-                f_digr_data.push(c_obj * v);
-            } else {
-                f_digr_data.push( (c_obj * v_knee_vel) + (c_obj * 0.3 * (v - v_knee_vel)) );
-            }
-        }
+    function generarReporteBalance(b) {
+        return `
+        <div class="st-card" style="border-top: 4px solid #8e44ad;">
+            <h3 style="color:#8e44ad; text-align:center; border-bottom:1px solid #ddd;">CÁLCULO DE BALANCE (Rigidez Rolido)</h3>
+            <div style="display:flex; gap:20px; font-family:'Segoe UI', sans-serif; font-size:0.85rem; color:#333;">
+                <div style="flex:1; border-right:1px solid #eee; padding-right:10px;">
+                    <div style="color:#2980b9; font-weight:bold; text-align:center;">DELANTERA</div>
+                    <div style="text-align:center; font-size:1.1em; margin-bottom:5px; font-weight:bold;">${b.kroll_f.toFixed(0)} Nm/rad</div>
+                    <div style="color:#666; font-size:0.8em; text-align:center;">Resortes: ${b.k_spr_f.toFixed(0)}</div>
+                    <div style="color:#666; font-size:0.8em; text-align:center;">ARB: ${b.k_arb_f.toFixed(0)}</div>
+                </div>
+                <div style="flex:1; padding-left:10px;">
+                    <div style="color:#c0392b; font-weight:bold; text-align:center;">TRASERA</div>
+                    <div style="text-align:center; font-size:1.1em; margin-bottom:5px; font-weight:bold;">${b.kroll_r.toFixed(0)} Nm/rad</div>
+                    <div style="color:#666; font-size:0.8em; text-align:center;">Resortes: ${b.k_spr_r.toFixed(0)}</div>
+                    <div style="color:#666; font-size:0.8em; text-align:center;">ARB: ${b.k_arb_r.toFixed(0)}</div>
+                </div>
+            </div>
+            <div style="margin-top:15px; padding:10px; background:#f8f9fa; border-radius:4px; text-align:center; border:1px solid #e9ecef; color:#333;">
+                Rigidez Total Chasis: <b>${b.kroll_tot.toFixed(0)} Nm/rad</b><br>
+                Distribución Delantera: <b>${(b.dist_f*100).toFixed(2)}%</b><br>
+                <span style="font-weight:bold; color:#8e44ad; font-size:1.1em;">${b.diag}</span>
+            </div>
+        </div>`;
+    }
 
-        const traceLin = { x: vel_data, y: f_lin_data, type: 'scatter', mode:'lines', name: `Lineal (Z=${zeta_target})`, line:{color:'#1a73e8', width:3} };
-        const traceDig = { x: vel_data, y: f_digr_data, type: 'scatter', mode:'lines', name: 'Digresiva (Simulada)', line:{color:'#d62828', dash:'dash', width:3} };
-
-        const layoutCurve = {
-            title: `Fuerza vs Velocidad (C_crit: ${c_crit_damper.toFixed(0)})`,
-            xaxis: { title: 'Velocidad de Vástago [mm/s]' },
-            yaxis: { title: 'Fuerza [N]' },
-            margin: { t: 40, b: 40, l: 50, r: 20 },
-            shapes: [{ type: 'rect', xref: 'x', yref: 'paper', x0: 0, x1: v_knee_vel*1000, y0: 0, y1: 1, fillcolor: 'rgba(255,255,0,0.15)', line: {width: 0} }]
-        };
-
-        // 4.2 Simulación Dinámica (Solver RK4 simple en JS)
-        const kt = k_tire;
-        const kw = kw_spring;
-        const c_wheel_sim = c_crit_wheel * zeta_target; 
-        const MR_sim = mr_damper;
-        const v_car = 10.0;
+    // --- SOLVER RK4 ---
+    function runRK4(res, roadFunc, tEnd) {
+        const ms = res.ms, mu = res.mu;
+        const kw = res.kw_spring, kt = res.k_tire;
+        const mr = res.mr_damper;
+        const c_reb = res.c_reb * mr**2; 
+        const c_comp = res.c_comp * mr**2;
         
-        // Parametros Terreno
-        const h_bache = 0.05, L_bache = 0.50, T_bache = L_bache / v_car;
-        const h_piano = 0.05, pitch = 0.10, L_diente = 0.08;
+        let t = 0, dt = 0.002;
+        let y = [0,0,0,0]; // xs, vs, xu, vu
+        
+        const t_arr = [], damp_arr = [], road_arr = [], xu_arr = [];
 
-        const road_bache = (t) => {
-            if (t >= 0 && t <= T_bache) return (h_bache/2) * (1 - Math.cos(2*Math.PI*t/T_bache));
-            return 0.0;
+        const deriv = (t, state) => {
+            let xs=state[0], vs=state[1], xu=state[2], vu=state[3];
+            let r = roadFunc(t);
+            let v_rel = vs - vu;
+            let c_inst = v_rel > 0 ? c_reb : c_comp;
+            
+            let vs_dot = (-kw*(xs-xu) - c_inst*(vs-vu))/ms;
+            let vu_dot = (kw*(xs-xu) + c_inst*(vs-vu) - kt*(xu-r))/mu;
+            return [vs, vs_dot, vu, vu_dot];
         };
 
-        const road_piano = (t) => {
-            let x = v_car * t;
-            let fase = x % pitch; 
-            if (fase <= L_diente) return (h_piano/2) * (1 - Math.cos(2*Math.PI*fase/L_diente));
-            return 0.0;
-        };
+        while(t <= tEnd) {
+            t_arr.push(t);
+            damp_arr.push((y[0]-y[2])*mr*1000); 
+            road_arr.push(roadFunc(t)*mr*1000); 
+            xu_arr.push(y[2]); 
+            
+            // Paso RK4
+            let k1 = deriv(t, y);
+            let k2 = deriv(t + dt/2, y.map((v,i) => v + k1[i]*dt/2));
+            let k3 = deriv(t + dt/2, y.map((v,i) => v + k2[i]*dt/2));
+            let k4 = deriv(t + dt, y.map((v,i) => v + k3[i]*dt));
 
-        const quarter_car_deriv = (t, z, roadFunc) => {
-            const xs = z[0], xsd = z[1], xu = z[2], xud = z[3];
-            const y_road = roadFunc(t);
-            const xsd_dot = (-kw*(xs-xu) - c_wheel_sim*(xsd-xud)) / ms;
-            const xud_dot = (kw*(xs-xu) + c_wheel_sim*(xsd-xud) - kt*(xu-y_road)) / mu_kg;
-            return [xsd, xsd_dot, xud, xud_dot];
-        };
+            y = y.map((v,i) => v + (dt/6)*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]));
+            t += dt;
+        }
+        return { t: t_arr, damp: damp_arr, road_ref: road_arr, xu: xu_arr };
+    }
 
-        const solve_rk4 = (roadFunc) => {
-            let t = 0, dt = 2.0 / 1000; 
-            let state = [0, 0, 0, 0]; 
-            const t_arr = [], damp_travel_arr = [];
+    // --- PLOTTING (CONFIGURADO PARA TEXTO NEGRO) ---
 
-            for(let i=0; i<1000; i++){
-                t_arr.push(t);
-                damp_travel_arr.push( (state[0] - state[2]) * MR_sim * 1000 );
+    function plotFvComparativo(f, r) {
+        const vel = [], f_reb = [], f_comp = [], r_reb = [], r_comp = [];
+        for(let v=0; v<=0.3; v+=0.01) {
+            vel.push(v*1000);
+            f_reb.push(f.c_reb*v); f_comp.push(-f.c_comp*v);
+            r_reb.push(r.c_reb*v); r_comp.push(-r.c_comp*v);
+        }
+        Plotly.newPlot('chart-fv', [
+            {x:vel, y:f_reb, name:'Del Reb', line:{color:'#2980b9', width:3}},
+            {x:vel, y:f_comp, name:'Del Comp', line:{color:'#2980b9', dash:'dot', width:3}},
+            {x:vel, y:r_reb, name:'Tras Reb', line:{color:'#c0392b', width:3}},
+            {x:vel, y:r_comp, name:'Tras Comp', line:{color:'#c0392b', dash:'dot', width:3}}
+        ], {
+            title:'Curvas F vs V (Comparativa)', 
+            plot_bgcolor: '#ffffff', paper_bgcolor: '#ffffff', font: { color: '#000000' },
+            xaxis:{title:'Velocidad Vástago (mm/s)', gridcolor:'#eee'}, yaxis:{title:'Fuerza (N)', gridcolor:'#eee'},
+            margin:{t:40,b:40,l:50,r:10}, legend:{orientation:"h", y:1.1}
+        }, {displayModeBar: false});
+    }
 
-                let k1 = quarter_car_deriv(t, state, roadFunc);
-                let k2 = quarter_car_deriv(t + dt/2, state.map((v,j)=>v + k1[j]*dt/2), roadFunc);
-                let k3 = quarter_car_deriv(t + dt/2, state.map((v,j)=>v + k2[j]*dt/2), roadFunc);
-                let k4 = quarter_car_deriv(t + dt, state.map((v,j)=>v + k3[j]*dt), roadFunc);
+    function plotTransitorio(sim_b, sim_p, divId, title, color) {
+        Plotly.newPlot(divId, [
+            {x:sim_b.t, y:sim_b.damp, name:'Bache', line:{color:color}},
+            {x:sim_p.t, y:sim_p.damp, name:'Piano', line:{color:'#9b59b6', width:1}}
+        ], {
+            title: title, 
+            plot_bgcolor: '#ffffff', paper_bgcolor: '#ffffff', font: { color: '#000000' },
+            xaxis:{title:'T (s)', gridcolor:'#eee'}, yaxis:{title:'Damper (mm)', gridcolor:'#eee'}, 
+            margin:{t:30,b:30,l:40,r:10}, showlegend:true, legend:{orientation:"h", y:1.1}
+        }, {displayModeBar: false});
+    }
 
-                state = state.map((v,j) => v + (dt/6)*(k1[j] + 2*k2[j] + 2*k3[j] + k4[j]));
-                t += dt;
-            }
-            return { t: t_arr, y: damp_travel_arr };
-        };
+    function plotGrip(sim, res, divId, title) {
+        const kt = res.k_tire;
+        const f_stat = res.f_total; 
+        const static_def_mm = (f_stat/kt)*1000;
+        
+        const grip_mm = sim.t.map((t, i) => {
+            let road_real_m = sim.road_ref[i] / res.mr_damper / 1000; 
+            let def_dyn_m = road_real_m - sim.xu[i];
+            return static_def_mm + (def_dyn_m * 1000);
+        });
 
-        const sol_bache = solve_rk4(road_bache);
-        const sol_piano = solve_rk4(road_piano);
+        Plotly.newPlot(divId, [
+            {x:sim.t, y:grip_mm, name:'Grip', fill:'tozeroy', line:{color:'green', width:1}}
+        ], {
+            title: title, 
+            plot_bgcolor: '#ffffff', paper_bgcolor: '#ffffff', font: { color: '#000000' },
+            shapes: [{type:'line', x0:0, x1:1, y0:0, y1:0, line:{color:'red', width:2}}],
+            yaxis:{title:'Compresión (mm)', range:[-2, Math.max(...grip_mm)+5], gridcolor:'#eee'}, 
+            xaxis:{gridcolor:'#eee'},
+            margin:{t:30,b:30,l:40,r:10}
+        }, {displayModeBar: false});
+    }
 
-        const traceBache = { x: sol_bache.t, y: sol_bache.y, type:'scatter', mode:'lines', name:'Bache único', line:{width:2, color:'#27ae60'} };
-        const tracePiano = { x: sol_piano.t, y: sol_piano.y, type:'scatter', mode:'lines', name:'Piano', line:{width:2, color:'#8e44ad'} };
+    function plotPhotoStyle(sim, res, divId, title) {
+         const kt = res.k_tire;
+         const f_stat = res.f_total; 
+         const static_def_mm = (f_stat/kt)*1000;
+         
+         const grip_mm = sim.t.map((t, i) => {
+             let road_real_m = sim.road_ref[i] / res.mr_damper / 1000; 
+             let def_dyn_m = road_real_m - sim.xu[i];
+             return static_def_mm + (def_dyn_m * 1000);
+         });
 
-        const layoutSim = {
-            title: 'Respuesta Dinámica (1/4 de Auto)',
-            xaxis: { title: 'Tiempo [s]', range: [0, 1.5] },
-            yaxis: { title: 'Recorrido Amortiguador [mm]' },
-            margin: { t: 40, b: 40, l: 50, r: 20 },
-            shapes: [{ type: 'line', x0: 0, x1: 1.5, y0: 0, y1: 0, line: {color: '#333', width: 1} }]
-        };
+         const min_grip = Math.min(...grip_mm);
+         
+         const layout = {
+             title: title,
+             plot_bgcolor: '#ffffff', paper_bgcolor: '#ffffff', font: { color: '#000000' },
+             xaxis:{title:'T (s)', gridcolor:'#eee'}, 
+             yaxis:{title:'Carga (mm)', gridcolor:'#eee'},
+             margin:{t:30,b:30,l:40,r:10},
+             shapes: [
+                {type:'line', x0:0, x1:1, y0:static_def_mm, y1:static_def_mm, line:{color:'gray', dash:'dot'}},
+                {type:'line', x0:0, x1:1, y0:0, y1:0, line:{color:'red', width:2}}
+             ]
+         };
 
-        Plotly.newPlot('damper-chart-curve', [traceLin, traceDig], layoutCurve, {displayModeBar: false});
-        Plotly.newPlot('damper-chart-sim', [traceBache, tracePiano], layoutSim, {displayModeBar: false});
+         if(min_grip < 0) {
+             layout.annotations = [{
+                 x: 0.5, y: 0.5, xref: 'paper', yref: 'paper',
+                 text: 'PERDIDA CONTACTO', showarrow: false,
+                 font: {color:'white', size:12, weight:'bold'}, bgcolor:'red', opacity: 0.8
+             }];
+         }
+
+         Plotly.newPlot(divId, [
+             {x:sim.t, y:grip_mm, name:'Carga', line:{color:'#e67e22', width:2}}
+         ], layout, {displayModeBar: false});
     }
 
     // Inicialización automática
