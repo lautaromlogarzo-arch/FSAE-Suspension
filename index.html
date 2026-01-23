@@ -534,6 +534,29 @@
                 <div class="st-row"><label>G Lateral (g):</label><input type="number" id="st_e_glat" value="1.4"></div>
             </div>
 
+            <div class="st-sub-header" style="border-top:2px solid #eee; padding-top:10px; color:#e67e22;">3. Datos Columna (Cardan)</div>
+            
+            <div class="st-row">
+                <label>Ángulo Cruceta 1 (°):</label>
+                <input type="number" id="st_u_angle1" value="12.0" placeholder="0">
+            </div>
+            <div class="st-row">
+                <label>Ángulo Cruceta 2 (°):</label>
+                <input type="number" id="st_u_angle2" value="5.0" placeholder="0">
+            </div>
+
+            <div style="background:#fff3e0; padding:5px; margin:5px 0; border-radius:4px; border:1px solid #ffe0b2;">
+                <div style="font-size:0.75rem; color:#d35400; text-align:center; margin-bottom:4px; font-weight:bold;">DIMENSIONES CRUCETA (Para Fatiga)</div>
+                <div class="st-row">
+                    <label>Diam. Efectivo (mm):</label>
+                    <input type="number" id="st_u_eff_diam" value="22.0">
+                </div>
+                <div class="st-row">
+                    <label>Diam. Muñón (mm):</label>
+                    <input type="number" id="st_u_pin_diam" value="9.0">
+                </div>
+            </div>
+
             <button class="st-btn" onclick="runSteeringCalc()">CALCULAR DIRECCIÓN</button>
         </div>
 
@@ -1378,16 +1401,92 @@
     // ==========================================
     // LOGICA DE LA APP DE DIRECCION (CODIGO ORIGINAL V5)
     // ==========================================
+    // Helper para obtener valores numéricos de los inputs de dirección
     const s_val = (id) => parseFloat(document.getElementById(id).value) || 0;
-    
+
+    // Función Principal que orquesta el cálculo
     function runSteeringCalc() {
         const container = document.getElementById('steering-output');
         container.innerHTML = ""; 
+
+        // 1. Generar HTML de Geometría y Piñones
         const htmlGeo = calculateSteeringGeometricHTML();
+
+        // 2. Generar HTML de Esfuerzos (Cremallera y Manos)
         const htmlStress = calculateSteeringStressHTML();
-        container.innerHTML = htmlGeo + htmlStress;
+
+        // 3. CALCULAR EL TORQUE PARA EL CARDAN
+        const paso = s_val('st_e_paso');
+        const z = s_val('st_e_z');
+        const brazo_direccion = s_val('st_e_brazo');
+        const masa = s_val('st_e_masa');
+        const h_cg = s_val('st_e_hcg');
+        const trocha = s_val('st_e_trocha');
+        const peso_front_pct = s_val('st_e_pf');
+        const lltd_front_pct = s_val('st_e_lltd');
+        const caster_deg = s_val('st_e_caster');
+        const kpi_deg = s_val('st_e_kpi');
+        const scrub_radius = s_val('st_e_scrub');
+        const pneu_trail = s_val('st_e_pneu');
+        const mech_trail = s_val('st_e_mech');
+        const steer_angle_deg = s_val('st_e_steer');
+        const g_lat = s_val('st_e_glat');
+        const g = 9.81;
+
+        // Cálculos físicos rápidos
+        const modulo = paso / Math.PI;
+        const diametro_primitivo = modulo * z;
+        const peso_front_static = (masa * g) * (peso_front_pct / 100);
+        const delta_w_lat_front = (masa * g * g_lat * h_cg / trocha) * (lltd_front_pct / 100);
+        const fz_outer = (peso_front_static / 2) + delta_w_lat_front;
+        const fy_outer = fz_outer * g_lat;
+        const total_trail = mech_trail + pneu_trail;
+        const mz_aligning = fy_outer * total_trail; 
+        const kpi_rad = kpi_deg * Math.PI / 180;
+        const caster_rad = caster_deg * Math.PI / 180;
+        const steer_rad = steer_angle_deg * Math.PI / 180;
+        const term_kpi = scrub_radius * Math.sin(kpi_rad);
+        const term_caster = mech_trail * Math.sin(caster_rad);
+        const mz_jacking = fz_outer * (term_kpi + term_caster) * Math.sin(steer_rad);
+        const mz_total = mz_aligning + mz_jacking; 
+
+        const fuerza_cremallera = mz_total / brazo_direccion; 
+        const torque_pinion_nmm = fuerza_cremallera * (diametro_primitivo / 2); 
+        const torque_pinion_nm = torque_pinion_nmm / 1000.0; 
+
+        // 4. Obtener inputs específicos del Cardan
+        const angulo1 = Math.abs(s_val('st_u_angle1'));
+        const angulo2 = Math.abs(s_val('st_u_angle2'));
+        const angulo_critico = Math.max(angulo1, angulo2); // Se usa el peor para el cálculo de rotura estática
+        
+        const diam_efectivo = s_val('st_u_eff_diam');
+        const diam_pin = s_val('st_u_pin_diam');
+
+        // Magnificación de Torque (Peor caso estático)
+        const rad_critico = angulo_critico * Math.PI / 180;
+        let torque_pinion_peak = torque_pinion_nm; 
+
+        if (Math.cos(rad_critico) > 0.05) {
+            torque_pinion_peak = torque_pinion_nm / Math.cos(rad_critico);
+        } else {
+            torque_pinion_peak = torque_pinion_nm * 10; 
+        }
+
+        // 5. Generar HTML del Cardan (Incluye contenedor para la gráfica)
+        const htmlCardan = generateCardanStressReport(torque_pinion_peak, torque_pinion_nm, angulo_critico, diam_efectivo, diam_pin);
+
+        // Renderizar todo junto
+        container.innerHTML = htmlGeo + htmlStress + htmlCardan;
+
+        // 6. GENERAR EL GRÁFICO (Nueva función)
+        // Se ejecuta después de que el HTML exista en el DOM
+        setTimeout(() => {
+            renderCardanTorquePlot('cardan-torque-plot', torque_pinion_nm, angulo1, angulo2);
+        }, 100);
     }
 
+    // MÓDULO 1: Análisis Geométrico y Tabla de Selección de Piñones (DISEÑO INVERSO)
+    // MÓDULO 1: Análisis Geométrico y Tabla de Selección de Piñones (DISEÑO INVERSO)
     function calculateSteeringGeometricHTML() {
         // --- INPUTS ---
         const giro_volante_req = s_val('st_giro_vol');
@@ -1423,6 +1522,7 @@
         const mz_jacking = fz_outer * (term_kpi + term_caster) * Math.sin(steer_rad);
         const mz_total_nm = (mz_aligning + mz_jacking) / 1000.0;
 
+        // --- MODIFICACIÓN: Se añade la columna Módulo en el <thead> ---
         let html = `<div class="st-card">
             <h3>1. Análisis Geometría & Selección Piñón</h3>
             <div class="st-stats-grid">
@@ -1431,32 +1531,55 @@
                 <div class="st-stat-box highlight"><span class="st-stat-label">Torque TOTAL Kingpin</span><span class="st-stat-value">${mz_total_nm.toFixed(2)} <span class="st-unit">Nm</span></span><span class="st-unit" style="font-size:0.7rem">@ ${g_lat}G Lateral</span></div>
                 <div class="st-stat-box"><span class="st-stat-label">Objetivo Piloto</span><span class="st-stat-value">${fuerza_objetivo_kg.toFixed(1)} <span class="st-unit">kg</span></span></div>
             </div>
-            <table class="st-table"><thead><tr><th>Paso</th><th>Z</th><th>Travel</th><th>Brazo (mm)</th><th>D.Prim</th><th>F. Manos</th><th>Estado</th></tr></thead><tbody>`;
+            <table class="st-table"><thead><tr><th>Paso</th><th>Z</th><th>Módulo</th><th>Travel</th><th>Brazo (mm)</th><th>D.Prim</th><th>F. Manos</th><th>Estado</th></tr></thead><tbody>`;
 
         const pasos_a_probar = [5, 6, 8, 10, 12, 12.5, 15];
         const dientes_a_probar = [10, 11, 12, 13, 14, 15];
-        const seno_rueda_tabla = Math.sin(giro_rueda_req * Math.PI / 180);
+        // const seno_rueda_tabla = Math.sin(giro_rueda_req * Math.PI / 180); // YA NO SE USA PARA CALCULAR BRAZO
         const fraccion_vuelta = giro_volante_req / 360.0;
 
         pasos_a_probar.forEach(paso => {
             dientes_a_probar.forEach(z => {
                 const perimetro_pinion = paso * z;
-                const travel = perimetro_pinion * fraccion_vuelta;
-                const brazo = travel / seno_rueda_tabla;
+                // Calculamos Travel solo como referencia visual de cuánto se mueve la cremallera con ese volante
+                const travel = perimetro_pinion * fraccion_vuelta; 
+                
                 const modulo = paso / Math.PI;
                 const d_primitivo = modulo * z;
+
+                // --- MODIFICACIÓN CLAVE AQUÍ ---
+                // En lugar de calcular brazo por ángulos, despejamos el brazo necesario para la fuerza objetivo.
+                // Fórmula: Mz = F_manos * (D_Volante / D_Pinion) * Brazo
+                // Brazo = (Mz * D_Pinion) / (F_Manos * D_Volante)
+                
+                let brazo = 0;
                 let f_manos_kg = 0;
+
+                if (fuerza_objetivo_kg > 0) {
+                    const f_target_n = fuerza_objetivo_kg * g;
+                    // mz_total_nm * 1000 para pasar a Nmm
+                    brazo = (mz_total_nm * 1000.0 * d_primitivo) / (f_target_n * diam_volante);
+                }
+
+                // Recalculamos F. Manos para confirmar (debería dar igual al objetivo +/- decimales)
                 if (brazo > 0) {
                     const f_cremallera = (mz_total_nm * 1000.0) / brazo;
                     const t_pinion = f_cremallera * (d_primitivo / 2.0);
                     const f_manos_n = t_pinion / (diam_volante / 2.0);
                     f_manos_kg = f_manos_n / g;
                 }
-                if (brazo >= 30 && brazo <= 110) {
+
+                if (brazo >= 15 && brazo <= 200) { // Amplié un poco el rango de seguridad de visualización
                     let badges = "";
-                    if (Math.abs(f_manos_kg - fuerza_objetivo_kg) < 1.5) { badges += `<span class="badge badge-confort">CONFORT</span>`; }
-                    if (Math.abs(brazo - Math.round(brazo)) < 0.1) { badges += `<span class="badge badge-optimo">OPTIMO MM</span>`; }
-                    html += `<tr><td>${paso}</td><td><b>${z}</b></td><td>${travel.toFixed(1)}</td><td style="font-weight:bold; color:var(--primary)">${brazo.toFixed(1)}</td><td>${d_primitivo.toFixed(1)}</td><td style="font-weight:bold;">${f_manos_kg.toFixed(1)} kg</td><td>${badges}</td></tr>`;
+                    // Ajustamos las badges. Ahora "Confort" siempre será verdadero si el cálculo funcionó, 
+                    // así que podemos usarlo para indicar si estamos cerca del objetivo (que siempre lo estaremos por fórmula)
+                    if (Math.abs(f_manos_kg - fuerza_objetivo_kg) < 1.0) { badges += `<span class="badge badge-confort">OK</span>`; }
+                    
+                    // Optimo MM sigue indicando si es un número entero bonito para fabricar
+                    if (Math.abs(brazo - Math.round(brazo)) < 0.1) { badges += `<span class="badge badge-optimo">ENTERO</span>`; }
+                    
+                    // --- MODIFICACIÓN: Se añade la celda con el cálculo del Módulo ---
+                    html += `<tr><td>${paso}</td><td><b>${z}</b></td><td>${modulo.toFixed(3)}</td><td>${travel.toFixed(1)}</td><td style="font-weight:bold; color:var(--primary)">${brazo.toFixed(1)}</td><td>${d_primitivo.toFixed(1)}</td><td style="font-weight:bold;">${f_manos_kg.toFixed(1)} kg</td><td>${badges}</td></tr>`;
                 }
             });
         });
@@ -1464,11 +1587,14 @@
         return html;
     }
 
+    // MÓDULO 2: Cálculo de Esfuerzos para un caso específico (Detalle)
     function calculateSteeringStressHTML() {
+        // --- INPUTS ESPECÍFICOS ---
         const paso = s_val('st_e_paso');
         const z = s_val('st_e_z');
         const brazo_direccion = s_val('st_e_brazo');
         const diametro_volante = s_val('st_e_diam');
+        // Inputs heredados o re-ingresados para el caso de carga
         const masa = s_val('st_e_masa');
         const h_cg = s_val('st_e_hcg');
         const trocha = s_val('st_e_trocha');
@@ -1483,27 +1609,41 @@
         const g_lat = s_val('st_e_glat');
         const g = 9.81;
 
+        // --- CÁLCULOS MECÁNICOS ---
         const modulo = paso / Math.PI;
         const diametro_primitivo = modulo * z;
         const diametro_exterior = (z + 2) * modulo;
+        
+        // Recálculo de carga dinámica en rueda exterior
         const peso_front_static = (masa * g) * (peso_front_pct / 100);
         const delta_w_lat_front = (masa * g * g_lat * h_cg / trocha) * (lltd_front_pct / 100);
         const fz_outer = (peso_front_static / 2) + delta_w_lat_front;
         const fy_outer = fz_outer * g_lat;
+        
+        // Torque total en el eje de dirección (Kingpin Axis)
         const total_trail = mech_trail + pneu_trail;
         const mz_aligning = fy_outer * total_trail; 
+        
         const kpi_rad = kpi_deg * Math.PI / 180;
         const caster_rad = caster_deg * Math.PI / 180;
         const steer_rad = steer_angle_deg * Math.PI / 180;
         const term_kpi = scrub_radius * Math.sin(kpi_rad);
         const term_caster = mech_trail * Math.sin(caster_rad);
         const mz_jacking = fz_outer * (term_kpi + term_caster) * Math.sin(steer_rad);
-        const mz_total = mz_aligning + mz_jacking;
-        const fuerza_cremallera = mz_total / brazo_direccion;
-        const torque_pinion = fuerza_cremallera * (diametro_primitivo / 2);
+        
+        const mz_total = mz_aligning + mz_jacking; // En N.mm
+        
+        // Fuerza requerida en la cremallera para mantener la dirección
+        const fuerza_cremallera = mz_total / brazo_direccion; // N
+        
+        // Torque transferido al piñón
+        const torque_pinion = fuerza_cremallera * (diametro_primitivo / 2); // N.mm
+        
+        // Fuerza tangencial en el volante (fuerza de manos)
         const fuerza_manos_n = torque_pinion / (diametro_volante / 2);
         const fuerza_manos_kg = fuerza_manos_n / g;
 
+        // HTML Output para la tarjeta de detalle
         return `<div class="st-card">
             <h3>2. Detalle de Esfuerzos (Caso Específico)</h3>
             <div class="st-stats-grid">
@@ -1521,6 +1661,162 @@
                 </table>
             </div>
         </div>`;
+    }
+    
+    // ======================================================
+    // GENERADOR DE REPORTE DE CARDAN (ACTUALIZADO CON MAGNIFICACIÓN)
+    // ======================================================
+    // ======================================================
+    // GENERADOR DE REPORTE DE CARDAN (CON CONTENEDOR GRÁFICO)
+    // ======================================================
+    function generateCardanStressReport(torquePeak, torqueNominal, angleDeg, effDiamMm, pinDiamMm) {
+        if (effDiamMm <= 0 || pinDiamMm <= 0) {
+            return `<div class="st-card"><h3 style="color:#d35400">3. Esfuerzos en Cardan</h3><p style="color:#aaa; text-align:center;">Faltan dimensiones.</p></div>`;
+        }
+
+        const radiusEff = effDiamMm / 2; 
+        const forceShearN = (torquePeak * 1000) / radiusEff;
+        const pinRadius = pinDiamMm / 2;
+        const areaMm2 = Math.PI * Math.pow(pinRadius, 2);
+        const shearStressMPa = forceShearN / areaMm2;
+        const vonMisesMPa = Math.sqrt(3) * shearStressMPa;
+        const limitSy = 300; 
+        const fs = limitSy / vonMisesMPa;
+
+        let badgeClass = "badge-danger";
+        let badgeText = "FALLA";
+        if (fs >= 2.0) { badgeClass = "badge-safe"; badgeText = "OK (Estático)"; } 
+        else if (fs >= 1.1) { badgeClass = "badge-warning"; badgeText = "OK (Límite)"; }
+
+        const deltaNm = torquePeak - torqueNominal;
+        const deltaPct = torqueNominal > 0 ? (deltaNm / torqueNominal) * 100 : 0;
+
+        let angleWarning = "";
+        if (Math.abs(angleDeg) > 15) {
+            angleWarning = `<div style="background:#fdedec; color:#c0392b; padding:8px; margin-bottom:15px; border-radius:4px; font-size:0.85rem; border:1px solid #fadbd8;">⚠️ Ángulo > 15° genera vibración torsional y picos de carga.</div>`;
+        }
+
+        return `
+        <div class="st-card" style="border-top: 4px solid #e67e22;">
+            <h3 style="color:#d35400; border-bottom: 2px solid #e67e22;">3. Esfuerzos en Cardan (Cruceta Crítica)</h3>
+            
+            ${angleWarning}
+
+            <div class="st-stats-grid">
+                <div class="st-stat-box">
+                    <span class="st-stat-label">ÁNGULO CRÍTICO</span>
+                    <span class="st-stat-value">${angleDeg.toFixed(1)}°</span>
+                </div>
+                <div class="st-stat-box">
+                    <span class="st-stat-label">TORQUE PICO (REAL)</span>
+                    <span class="st-stat-value">${torquePeak.toFixed(1)} Nm</span>
+                    <span class="st-unit" style="color:${deltaNm > 0.1 ? '#c0392b' : '#999'}">
+                        Input: ${torqueNominal.toFixed(1)} (+${deltaPct.toFixed(1)}%)
+                    </span>
+                </div>
+                <div class="st-stat-box" style="border-left-color: #2980b9; background-color: #f4f9fd;">
+                    <span class="st-stat-label" style="color:#2980b9;">FUERZA MUÑÓN</span>
+                    <span class="st-stat-value" style="color:#2c3e50;">${forceShearN.toFixed(0)} N</span>
+                </div>
+            </div>
+
+            <table class="st-table" style="margin-top:15px;">
+                <tr><td style="color:#555;">Diámetro Muñón:</td><td style="text-align:right; font-weight:bold;">${pinDiamMm} mm</td></tr>
+                <tr><td style="color:#555;">Esfuerzo Corte (Tau):</td><td style="text-align:right;">${shearStressMPa.toFixed(1)} MPa</td></tr>
+                <tr style="background-color: #fff3e0; border-bottom: 2px solid #ffe0b2;"> 
+                    <td style="font-weight:bold; color:#d35400;">Esfuerzo Eq. (Von Mises):</td>
+                    <td style="text-align:right; font-weight:900; color:#d35400; font-size:1.1em;">${vonMisesMPa.toFixed(1)} MPa</td>
+                </tr>
+                <tr style="border-top: 2px solid #eee;">
+                    <td style="padding-top:12px;">Estado Estático (Ref Sy ${limitSy}):</td>
+                    <td style="text-align:right; padding-top:12px;"><span style="font-size:0.9em; margin-right:5px; color:#666;">FS: ${fs.toFixed(2)}</span><span class="badge ${badgeClass}">${badgeText}</span></td>
+                </tr>
+            </table>
+
+            <div id="cardan-torque-plot" style="width:100%; height:320px; margin-top:25px; border:1px solid #eee; border-radius:4px;"></div>
+            
+            <div class="note" style="margin-top:10px; color:#999; font-style:italic;">
+                * Nota: El gráfico asume crucetas en fase estándar (alineadas) en el eje intermedio. Si los ángulos son iguales, las fluctuaciones se cancelan.
+            </div>
+        </div>`;
+    }
+
+    // ======================================================
+    // NUEVA FUNCION DE GRAFICADO (VARIACIÓN DE TORQUE)
+    // ======================================================
+    function renderCardanTorquePlot(divId, torqueIn, deg1, deg2) {
+        if (!torqueIn) torqueIn = 0;
+        
+        // Convertir a radianes
+        const a1 = deg1 * Math.PI / 180;
+        const a2 = deg2 * Math.PI / 180;
+
+        const x_vals = [];
+        const y_vals = [];
+
+        // Barrido de -135 a 135 grados
+        for (let ang = -135; ang <= 135; ang += 2) {
+            const th1 = ang * Math.PI / 180;
+            
+            // 1. Primer Cardan: T_mid = T_in / Ratio_1
+            // Factor de Torque J1 = (1 - sin^2(a1)*sin^2(th1)) / cos(a1)
+            // (La fórmula de T_salida es T_entrada * Factor)
+            const term1 = 1 - Math.pow(Math.sin(a1), 2) * Math.pow(Math.sin(th1), 2);
+            const factor1 = term1 / Math.cos(a1);
+            const t_mid = torqueIn * factor1;
+
+            // 2. Ángulo intermedio (Cinemática exacta) para alimentar al segundo cardan
+            // Tan(th2) = Tan(th1) * Cos(a1)
+            // Usamos la identidad cos^2(th2) para evitar calcular atan y problemas de cuadrante
+            // cos^2(th2) = cos^2(th1) / (cos^2(th1) + sin^2(th1)*cos^2(a1))
+            const cos2_th1 = Math.pow(Math.cos(th1), 2);
+            const sin2_th1 = Math.pow(Math.sin(th1), 2);
+            const cos2_a1 = Math.pow(Math.cos(a1), 2);
+            const cos2_th2 = cos2_th1 / (cos2_th1 + sin2_th1 * cos2_a1);
+
+            // 3. Segundo Cardan (Asumiendo Faseado Estándar/Correcto: 90 grados de desfase)
+            // La cancelación ocurre si el yugo de entrada del J2 está a 90 grados del yugo de salida del J1.
+            // Esto implica que usamos cos^2(th2) en lugar de sin^2(th2) en la fórmula del segundo joint.
+            const term2 = 1 - Math.pow(Math.sin(a2), 2) * cos2_th2; // Usamos cos^2(th2) por el desfase de 90
+            const factor2 = term2 / Math.cos(a2);
+            
+            const t_out = t_mid * factor2;
+
+            x_vals.push(ang);
+            y_vals.push(t_out);
+        }
+
+        // Configuración Plotly
+        const trace = {
+            x: x_vals,
+            y: y_vals,
+            mode: 'lines',
+            line: {color: '#e67e22', width: 3},
+            fill: 'tozeroy',
+            fillcolor: 'rgba(230, 126, 34, 0.1)',
+            name: 'Torque Salida'
+        };
+
+        const traceInput = {
+            x: [-135, 135],
+            y: [torqueIn, torqueIn],
+            mode: 'lines',
+            line: {color: '#999', width: 2, dash:'dot'},
+            name: 'Torque Input'
+        };
+
+        const layout = {
+            title: {text: 'Fluctuación de Torque (2 Cardanes)', font: {size: 14}},
+            margin: {l:40, r:20, b:40, t:40},
+            xaxis: {title: 'Giro Volante (°)', gridcolor: '#eee', zerolinecolor: '#ccc'},
+            yaxis: {title: 'Torque (Nm)', gridcolor: '#eee'},
+            showlegend: true,
+            legend: {orientation: 'h', y: 1.1},
+            plot_bgcolor: '#fff',
+            paper_bgcolor: '#fff'
+        };
+
+        Plotly.newPlot(divId, [traceInput, trace], layout, {displayModeBar: false});
     }
 
     // ==========================================
