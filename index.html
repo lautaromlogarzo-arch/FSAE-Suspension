@@ -493,11 +493,11 @@
             
             <div class="st-sub-header">1. Inputs Geometría (Tabla)</div>
             <div class="st-row"><label>Giro Volante (°):</label><input type="number" id="st_giro_vol" value="135.0"></div>
-            <div class="st-row"><label>Giro Rueda (°):</label><input type="number" id="st_giro_rueda" value="15.0"></div>
-            <div class="st-row"><label>Fuerza Objetivo (kg):</label><input type="number" id="st_obj_kg" value="30.0"></div>
+            <div class="st-row"><label>Giro Rueda (°):</label><input type="number" id="st_giro_rueda" value="35.0"></div>
+            <div class="st-row"><label>Fuerza Objetivo (kg):</label><input type="number" id="st_obj_kg" value="15"></div>
             
             <div style="background:#f0f8ff; padding:5px; margin:5px 0; border-radius:4px;">
-                <div class="st-row"><label>Masa (kg):</label><input type="number" id="st_g_masa" value="360.0"></div>
+                <div class="st-row"><label>Masa (kg):</label><input type="number" id="st_g_masa" value="350.0"></div>
                 <div class="st-row"><label>H CG (mm):</label><input type="number" id="st_g_hcg" value="350.0"></div>
                 <div class="st-row"><label>Trocha (mm):</label><input type="number" id="st_g_trocha" value="1200.0"></div>
                 <div class="st-row"><label>% Peso Front:</label><input type="number" id="st_g_pf" value="40.0"></div>
@@ -513,13 +513,13 @@
             </div>
 
             <div class="st-sub-header" style="border-top:2px solid #eee; padding-top:10px;">2. Inputs Esfuerzos (Detalle)</div>
-            <div class="st-row"><label>Paso (mm):</label><input type="number" id="st_e_paso" value="5.0"></div>
-            <div class="st-row"><label>Z Piñón:</label><input type="number" id="st_e_z" value="10"></div>
-            <div class="st-row"><label>Brazo Mangueta (mm):</label><input type="number" id="st_e_brazo" value="36.0"></div>
+            <div class="st-row"><label>Paso (mm):</label><input type="number" id="st_e_paso" value="10.0"></div>
+            <div class="st-row"><label>Z Piñón:</label><input type="number" id="st_e_z" value="11"></div>
+            <div class="st-row"><label>Brazo Mangueta (mm):</label><input type="number" id="st_e_brazo" value="75.1"></div>
             <div class="st-row"><label>Diam. Volante (mm):</label><input type="number" id="st_e_diam" value="260.0"></div>
             
             <div style="background:#fff0f0; padding:5px; margin:5px 0; border-radius:4px;">
-                <div class="st-row"><label>Masa (kg):</label><input type="number" id="st_e_masa" value="360.0"></div>
+                <div class="st-row"><label>Masa (kg):</label><input type="number" id="st_e_masa" value="350.0"></div>
                 <div class="st-row"><label>H CG (mm):</label><input type="number" id="st_e_hcg" value="350.0"></div>
                 <div class="st-row"><label>Trocha (mm):</label><input type="number" id="st_e_trocha" value="1200.0"></div>
                 <div class="st-row"><label>Dist. Ejes (mm):</label><input type="number" id="st_e_wb" value="1650.0"></div>
@@ -542,7 +542,7 @@
             </div>
             <div class="st-row">
                 <label>Ángulo Cruceta 2 (°):</label>
-                <input type="number" id="st_u_angle2" value="0.0" placeholder="0">
+                <input type="number" id="st_u_angle2" value="0" placeholder="0">
             </div>
 
             <div style="background:#fff3e0; padding:5px; margin:5px 0; border-radius:4px; border:1px solid #ffe0b2;">
@@ -556,6 +556,50 @@
                     <input type="number" id="st_u_pin_diam" value="9.0">
                 </div>
             </div>
+
+            <div class="st-sub-header" style="border-top:2px solid #eee; padding-top:10px; color:#8e44ad;">4. Dimensionamiento Piñón (AGMA)</div>
+            
+            <div class="st-row">
+                <label>Ancho de Cara F (mm):</label>
+                <input type="number" id="st_g_face" value="100">
+            </div>
+
+            <div style="background:#f3e5f5; padding:5px; border-radius:4px; margin-bottom:5px;">
+                <div class="st-row">
+                    <label>Dureza Brinell (HB):</label>
+                    <input type="number" id="st_mat_hb" value="280" onchange="updateScFromHb()">
+                </div>
+                <div class="st-row">
+                    <label>Resistencia Sup. Sc (MPa):</label>
+                    <input type="number" id="st_mat_sc" value="550">
+                </div>
+                <div class="note" style="color:#8e44ad;">*Si ingresa HB, Sc se calcula solo (2.22*HB + 200).</div>
+            </div>
+
+            <div class="st-row">
+                <label>Sy Piñón (MPa):</label>
+                <input type="number" id="st_mat_sy_pinion" value="600">
+            </div>
+
+            <div class="st-sub-header" style="font-size:0.8rem; color:#666;">FACTORES AGMA</div>
+            
+            <div class="st-row">
+                <label>Sobrecarga (Ko/Ka):</label>
+                <input type="number" id="st_k_o" value="1.40" step="0.05">
+            </div>
+            <div class="note">Nota: Pianos/Baches -> 1.25 a 1.5</div>
+
+            <div class="st-row">
+                <label>Dinámico (Kv):</label>
+                <input type="number" id="st_k_v" value="1.10" step="0.05">
+            </div>
+            <div class="note">Nota: Dir. Manual (Baja Vel) -> 1.05 a 1.1</div>
+
+            <div class="st-row">
+                <label>Montaje (Km):</label>
+                <input type="number" id="st_k_m" value="1.20" step="0.05">
+            </div>
+            <div class="note">Nota: Montaje no perfecto -> 1.2</div>
 
             <button class="st-btn" onclick="runSteeringCalc()">CALCULAR DIRECCIÓN</button>
         </div>
@@ -1415,10 +1459,14 @@
         // 2. Generar HTML de Esfuerzos (Cremallera y Manos)
         const htmlStress = calculateSteeringStressHTML();
 
-        // 3. CALCULAR EL TORQUE PARA EL CARDAN
+        // 3. CALCULAR EL TORQUE PARA EL CARDAN Y PIÑÓN
+        // Recalculamos fuerzas básicas necesarias para pasar a las subfunciones
         const paso = s_val('st_e_paso');
         const z = s_val('st_e_z');
         const brazo_direccion = s_val('st_e_brazo');
+        const diam_volante = s_val('st_e_diam');
+        
+        // --- CALCULO FÍSICO RÁPIDO PARA OBTENER FUERZA DE CREMALLERA ---
         const masa = s_val('st_e_masa');
         const h_cg = s_val('st_e_hcg');
         const trocha = s_val('st_e_trocha');
@@ -1433,9 +1481,6 @@
         const g_lat = s_val('st_e_glat');
         const g = 9.81;
 
-        // Cálculos físicos rápidos
-        const modulo = paso / Math.PI;
-        const diametro_primitivo = modulo * z;
         const peso_front_static = (masa * g) * (peso_front_pct / 100);
         const delta_w_lat_front = (masa * g * g_lat * h_cg / trocha) * (lltd_front_pct / 100);
         const fz_outer = (peso_front_static / 2) + delta_w_lat_front;
@@ -1450,40 +1495,250 @@
         const mz_jacking = fz_outer * (term_kpi + term_caster) * Math.sin(steer_rad);
         const mz_total = mz_aligning + mz_jacking; 
 
-        const fuerza_cremallera = mz_total / brazo_direccion; 
+        const fuerza_cremallera = mz_total / brazo_direccion; // NEWTONS
+        const modulo = paso / Math.PI;
+        const diametro_primitivo = modulo * z;
         const torque_pinion_nmm = fuerza_cremallera * (diametro_primitivo / 2); 
         const torque_pinion_nm = torque_pinion_nmm / 1000.0; 
 
         // 4. Obtener inputs específicos del Cardan
         const angulo1 = Math.abs(s_val('st_u_angle1'));
         const angulo2 = Math.abs(s_val('st_u_angle2'));
-        const angulo_critico = Math.max(angulo1, angulo2); // Se usa el peor para el cálculo de rotura estática
-        
+        const angulo_critico = Math.max(angulo1, angulo2); 
         const diam_efectivo = s_val('st_u_eff_diam');
         const diam_pin = s_val('st_u_pin_diam');
 
         // Magnificación de Torque (Peor caso estático)
         const rad_critico = angulo_critico * Math.PI / 180;
         let torque_pinion_peak = torque_pinion_nm; 
-
         if (Math.cos(rad_critico) > 0.05) {
             torque_pinion_peak = torque_pinion_nm / Math.cos(rad_critico);
         } else {
             torque_pinion_peak = torque_pinion_nm * 10; 
         }
 
-        // 5. Generar HTML del Cardan (Incluye contenedor para la gráfica)
+        // 5. Generar HTML del Cardan
         const htmlCardan = generateCardanStressReport(torque_pinion_peak, torque_pinion_nm, angulo_critico, diam_efectivo, diam_pin);
 
-        // Renderizar todo junto
-        container.innerHTML = htmlGeo + htmlStress + htmlCardan;
+        // 6. === NUEVO: GENERAR HTML DEL PIÑÓN (AGMA) ===
+        // Pasamos la fuerza en cremallera (Wt) y el torque pico
+        const htmlPinion = generatePinionCheckHTML(paso, z, fuerza_cremallera);
 
-        // 6. GENERAR EL GRÁFICO (Nueva función)
-        // Se ejecuta después de que el HTML exista en el DOM
+        // Renderizar todo junto
+        container.innerHTML = htmlGeo + htmlStress + htmlCardan + htmlPinion;
+
+        // GRÁFICOS
         setTimeout(() => {
             renderCardanTorquePlot('cardan-torque-plot', torque_pinion_nm, angulo1, angulo2);
+            // Dibujar el piñón
+            drawPinionGeometry('pinion-viz-container', paso, z);
         }, 100);
     }
+
+    // <--- PEGAR AQUI function updateScFromHb() --->
+    function updateScFromHb() {
+        const hb = parseFloat(document.getElementById('st_mat_hb').value) || 0;
+        if(hb > 0) {
+            const sc_calc = (2.22 * hb) + 200; 
+            document.getElementById('st_mat_sc').value = sc_calc.toFixed(0);
+        }
+    }
+
+    // === GENERADOR HTML PIÑÓN (AGMA) ===
+    function generatePinionCheckHTML(paso, z, fuerzaCremalleraN) {
+        // Inputs
+        const F_mm = s_val('st_g_face');
+        const Sc_mpa = s_val('st_mat_sc');
+        const Sy_mpa = s_val('st_mat_sy_pinion');
+        
+        const Ko = s_val('st_k_o');
+        const Kv = s_val('st_k_v');
+        const Km = s_val('st_k_m');
+        
+        // Geometría
+        const modulo = paso / Math.PI;
+        const d_mm = modulo * z;
+        const r_mm = d_mm / 2;
+        const phi_deg = 20; // Asumimos 20 grados estándar
+        const phi_rad = phi_deg * Math.PI / 180;
+        
+        // 1. RELACIÓN DE CONTACTO (Contact Ratio - mc)
+        const a_addendum = modulo; // Diente completo
+        const pb = Math.PI * modulo * Math.cos(phi_rad);
+        
+        const term1 = Math.sqrt(Math.pow(r_mm + a_addendum, 2) - Math.pow(r_mm * Math.cos(phi_rad), 2));
+        const term2 = r_mm * Math.sin(phi_rad);
+        const term3 = a_addendum / Math.sin(phi_rad);
+        
+        const Lab = (term1 - term2) + term3;
+        const mc = Lab / pb;
+
+        let mc_badge = mc >= 1.2 ? 
+            `<span class="badge badge-safe">OK (${mc.toFixed(2)})</span>` : 
+            `<span class="badge badge-danger">BAJO (${mc.toFixed(2)})</span>`;
+
+        if(mc < 1.0) mc_badge = `<span class="badge badge-danger" style="background:black; color:red">FALLA (${mc.toFixed(2)})</span>`;
+
+        // 2. ESFUERZO DE CONTACTO (AGMA) - Presión Hertziana
+        const Cp = 191; 
+        const Ks = 1.0;
+        const I_factor = Math.sin(2 * phi_rad) / 4; // ~0.163 para 20 deg
+        const Wt = fuerzaCremalleraN;
+
+        const numerator = Wt * Ko * Kv * Ks * Km;
+        const denominator = d_mm * F_mm * I_factor;
+        
+        const sigma_c = Cp * Math.sqrt(numerator / denominator);
+        
+        // Factores de Seguridad
+        const n_contact = Sc_mpa / sigma_c;
+        const n_yield = Sy_mpa / sigma_c; 
+
+        // Badges FS
+        const badge_contact = n_contact >= 1.0 ? 
+            (n_contact >= 1.2 ? `<span class="badge badge-safe">${n_contact.toFixed(2)}</span>` : `<span class="badge badge-warning">${n_contact.toFixed(2)}</span>`) :
+            `<span class="badge badge-danger">${n_contact.toFixed(2)}</span>`;
+
+        const badge_yield = n_yield >= 1.0 ? 
+            `<span class="badge badge-safe">${n_yield.toFixed(2)}</span>` : 
+            `<span class="badge badge-danger">${n_yield.toFixed(2)}</span>`;
+
+        return `
+        <div class="st-card" style="border-top: 4px solid #8e44ad;">
+            <h3 style="color:#8e44ad; border-bottom: 2px solid #8e44ad;">4. Verificación de Piñón (AGMA 2001)</h3>
+            
+            <div style="display:flex; flex-direction:row; gap:20px;">
+                <div style="flex:1;">
+                    <h4 style="text-align:center; margin:0 0 10px 0;">Geometría y Cotas</h4>
+                    <div id="pinion-viz-container" style="width:100%; height:250px; border:1px solid #eee;"></div>
+                </div>
+
+                <div style="flex:1;">
+                    <table class="st-table">
+                        <tr><td>Módulo:</td><td style="text-align:right;">${modulo.toFixed(3)}</td></tr>
+                        <tr><td>Diámetro Primitivo:</td><td style="text-align:right;">${d_mm.toFixed(2)} mm</td></tr>
+                        <tr><td><b>Relación Contacto (mc):</b></td><td style="text-align:right;">${mc_badge}</td></tr>
+                    </table>
+
+                    <div style="margin-top:10px; font-size:0.8rem; color:#666;">
+                        <b>Parámetros de Cálculo:</b><br>
+                        Wt = ${Wt.toFixed(0)} N | Ko=${Ko} | Kv=${Kv} | Km=${Km}
+                    </div>
+
+                    <div style="background:#f3e5f5; padding:10px; margin-top:10px; border-radius:4px; border:1px solid #e1bee7;">
+                        <div style="text-align:center; font-weight:bold; color:#8e44ad; font-size:1.1em;">
+                            Presión Hertziana Máxima: ${sigma_c.toFixed(1)} MPa
+                        </div>
+                    </div>
+
+                    <table class="st-table" style="margin-top:10px;">
+                        <tr>
+                            <td>FS vs Sc (Pitting):</td>
+                            <td style="text-align:right;">${badge_contact}</td>
+                        </tr>
+                        <tr>
+                            <td>FS vs Sy (Fluencia):</td> 
+                            <td style="text-align:right;">${badge_yield}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+             <div class="note" style="margin-top:5px; text-align:center;">
+                * Ecuación: σc = Cp * sqrt( (Wt*Ko*Kv*Km) / (d*F*I) )
+             </div>
+        </div>
+        `;
+    }
+
+    // === DIBUJADO DEL PIÑÓN CON COTAS ===
+    function drawPinionGeometry(divId, paso, z) {
+        const modulo = paso / Math.PI;
+        const d_pitch = modulo * z;
+        const r_pitch = d_pitch / 2;
+        const a = modulo; 
+        const b = 1.25 * modulo;
+        const r_outer = r_pitch + a;
+        const r_root = r_pitch - b;
+
+        // Círculos base
+        const steps = 100;
+        function circle(r) {
+            let x=[], y=[];
+            for(let i=0; i<=steps; i++){
+                let th = (i/steps)*2*Math.PI;
+                x.push(r*Math.cos(th));
+                y.push(r*Math.sin(th));
+            }
+            return {x,y};
+        }
+
+        const cPitch = circle(r_pitch);
+        const cOuter = circle(r_outer);
+        const cRoot = circle(r_root);
+
+        // Trazas
+        const tracePitch = {
+            x: cPitch.x, y: cPitch.y, mode:'lines', 
+            line:{color:'#8e44ad', width:1, dash:'dash'}, 
+            name:'Primitivo', hoverinfo:'skip'
+        };
+        const traceOuter = {
+            x: cOuter.x, y: cOuter.y, mode:'lines', 
+            line:{color:'#333', width:2}, 
+            name:'Exterior', hoverinfo:'skip'
+        };
+        const traceRoot = {
+            x: cRoot.x, y: cRoot.y, mode:'lines', 
+            line:{color:'#333', width:1}, 
+            name:'Raíz', hoverinfo:'skip'
+        };
+
+        // Dibujar un "Diente" esquemático arriba para ponerle cotas
+        // Un trapecio simple representando el diente en Y positivo
+        const toothW = (Math.PI * modulo) / 2; // Ancho en primitivo
+        const angPitch = (toothW / r_pitch); // Angulo que ocupa medio diente
+        
+        // Coordenadas aproximadas diente
+        const tX = [ -toothW/2 * 0.6, -toothW/2, toothW/2, toothW/2 * 0.6, -toothW/2 * 0.6 ];
+        const tY = [ r_outer, r_root, r_root, r_outer, r_outer ];
+        
+        const traceTooth = {
+            x: tX, y: tY, mode: 'lines', fill:'toself', fillcolor:'rgba(142, 68, 173, 0.2)',
+            line: {color: '#8e44ad', width: 2}, name: 'Diente Ref'
+        };
+
+        // Anotaciones (Cotas)
+        const annotations = [
+            {
+                x: 0, y: r_pitch, xref: 'x', yref: 'y',
+                text: `D.Prim: ${d_pitch.toFixed(1)}`,
+                showarrow: true, arrowhead: 2, ax: 40, ay: -20, font:{size:10, color:'#8e44ad'}
+            },
+            {
+                x: 0, y: r_outer, xref: 'x', yref: 'y',
+                text: `D.Ext: ${(r_outer*2).toFixed(1)}`,
+                showarrow: true, arrowhead: 2, ax: -40, ay: -30, font:{size:10}
+            },
+            {
+                x: 0, y: 0, xref: 'x', yref: 'y',
+                text: `Z=${z}`,
+                showarrow: false, font:{size:14, weight:'bold', color:'#ccc'}
+            }
+        ];
+
+        const layout = {
+            margin: {l:10, r:10, b:10, t:10},
+            showlegend: false,
+            xaxis: {scaleanchor: "y", scaleratio: 1, visible:false},
+            yaxis: {visible:false},
+            annotations: annotations,
+            height: 250
+        };
+
+        Plotly.newPlot(divId, [traceOuter, tracePitch, traceRoot, traceTooth], layout, {displayModeBar: false});
+    }
+
+    // function calculateSteeringGeometricHTML() ...
 
     // MÓDULO 1: Análisis Geométrico y Tabla de Selección de Piñones (DISEÑO INVERSO)
     // MÓDULO 1: Análisis Geométrico y Tabla de Selección de Piñones (DISEÑO INVERSO)
