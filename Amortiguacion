@@ -1,0 +1,392 @@
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+
+# =============================================================================
+#  BLOQUE 1: INPUTS GENERALES DEL VEHÍCULO (GLOBALES)
+# =============================================================================
+vehiculo_global = {
+    "peso_total_kg": 350.0,
+    "dist_ejes_m": 1.650,
+    "dist_cg_del_m": 1.0,
+    "altura_cg_m": 0.30,
+    "ancho_via_m": 1.200,
+    "g_lat": 1.5,
+    "g_long": 1.7,
+    "g_gravedad": 9.81,
+    "downforce_total_N": 0,
+    "aero_bal_front_pct": 0.45
+}
+
+# --- DEFINICIÓN DE LA PISTA PARA SIMULACIÓN ---
+v_car = 15.0  # m/s
+
+# Bache Único
+h_bache = 0.05
+L_bache = 0.50
+T_bache = L_bache / v_car
+
+# Piano (Rumble Strip)
+h_piano = 0.04
+pitch = 0.10
+L_diente = 0.08
+
+def road_bache(t):
+    if 0 <= t <= T_bache:
+        return h_bache/2 * (1 - np.cos(2*np.pi*t/T_bache))
+    return 0.0
+
+def road_piano(t):
+    x = v_car * t
+    fase = x % pitch
+    if fase <= L_diente:
+        return h_piano/2 * (1 - np.cos(2*np.pi*fase/L_diente))
+    return 0.0
+
+# =============================================================================
+#  BLOQUE 1.5: INPUTS ESPECÍFICOS POR EJE
+# =============================================================================
+
+# --- EJE DELANTERO ---
+front_inputs = {
+    "nombre": "DELANTERO",
+    "k_tire_input": 100.0, "mu_kg": 16.0,
+    "p_pushrod_upright": [-0.002, 0.50, 0.175],
+    "p_pushrod_rocker":  [-0.002, 0.25, 0.400],
+    "brazo_pushrod_m": 0.100, "brazo_damper_m": 0.10, "brazo_arb_m": 0.080,
+    "k_resorte_lbs_in": 300, "resorte_l_libre_mm": 120.0, "resorte_l_solido_mm": 60.0,
+    "arb_ancho_m": 0.300, "arb_brazo_m": 0.100, "arb_d_ext_m": 0.015, "arb_d_int_m": 0.000, "G_material": 80e9,
+    # Amortiguación
+    "zeta_rebound": 0.70,
+    "zeta_compression": 0.35,
+    "v_max_plot": 0.30
+}
+
+# --- EJE TRASERO ---
+rear_inputs = {
+    "nombre": "TRASERO",
+    "k_tire_input": 100.0, "mu_kg": 18.0,
+    "p_pushrod_upright": [-0.002, 0.50, 0.175],
+    "p_pushrod_rocker":  [-0.002, 0.25, 0.400],
+    "brazo_pushrod_m": 0.100, "brazo_damper_m": 0.11, "brazo_arb_m": 0.070,
+    "k_resorte_lbs_in": 450, "resorte_l_libre_mm": 140.0, "resorte_l_solido_mm": 70.0,
+    "arb_ancho_m": 0.300, "arb_brazo_m": 0.120, "arb_d_ext_m": 0.012, "arb_d_int_m": 0.000, "G_material": 80e9,
+    "zeta_rebound": 0.75,
+    "zeta_compression": 0.40,
+    "v_max_plot": 0.30
+}
+
+# =============================================================================
+#  BLOQUE 2: SOLVER PRINCIPAL (CORREGIDO FÍSICAMENTE)
+# =============================================================================
+
+def calcular_dinamica_eje(inputs_eje, vehiculo, es_delantero=True):
+    
+    # --- MASA SUSPENDIDA GLOBAL (Correcto) ---
+    mu_del_ref = front_inputs["mu_kg"]
+    mu_tra_ref = rear_inputs["mu_kg"]
+    masa_suspendida_total = vehiculo["peso_total_kg"] - (2 * mu_del_ref) - (2 * mu_tra_ref)
+
+    # Fracciones de peso (Weight Bias)
+    if es_delantero:
+        weight_frac = (vehiculo["dist_ejes_m"] - vehiculo["dist_cg_del_m"]) / vehiculo["dist_ejes_m"]
+        df_share = vehiculo["downforce_total_N"] * vehiculo["aero_bal_front_pct"]
+    else:
+        weight_frac = vehiculo["dist_cg_del_m"] / vehiculo["dist_ejes_m"]
+        df_share = vehiculo["downforce_total_N"] * (1 - vehiculo["aero_bal_front_pct"])
+
+    ms = (masa_suspendida_total * weight_frac) / 2
+    downforce_por_rueda = df_share / 2
+
+    # 2. Conversiones y MR
+    k_tire = inputs_eje["k_tire_input"] * 1000
+    k_resorte = inputs_eje["k_resorte_lbs_in"] * 175.127
+
+    vec_pr = [b - a for a, b in zip(inputs_eje["p_pushrod_upright"], inputs_eje["p_pushrod_rocker"])]
+    longitud_pr = math.sqrt(sum(c**2 for c in vec_pr))
+    factor_angulo = abs(vec_pr[2]) / longitud_pr
+    
+    mr_damper = factor_angulo * (inputs_eje["brazo_damper_m"] / inputs_eje["brazo_pushrod_m"])
+    mr_arb = factor_angulo * (inputs_eje["brazo_arb_m"] / inputs_eje["brazo_pushrod_m"])
+
+    # 3. Rigideces (Wheel Rates)
+    kw_spring = k_resorte * mr_damper**2
+    
+    J = math.pi * (inputs_eje["arb_d_ext_m"]**4 - inputs_eje["arb_d_int_m"]**4) / 32
+    k_torsion = inputs_eje["G_material"] * J / inputs_eje["arb_ancho_m"]
+    k_arb_lineal = k_torsion / inputs_eje["arb_brazo_m"]**2
+    kw_arb = k_arb_lineal * mr_arb**2
+
+    # 4. Cargas y Recorridos (CORRECCIONES APLICADAS)
+    f_static = ms * vehiculo["g_gravedad"] + downforce_por_rueda
+    
+    # --- CORRECCIÓN 2: TRANSFERENCIA LONGITUDINAL PONDERADA ---
+    transfer_long_total = (vehiculo["peso_total_kg"] * vehiculo["g_long"] * vehiculo["g_gravedad"] * vehiculo["altura_cg_m"]) / vehiculo["dist_ejes_m"]
+    
+    if es_delantero:
+        delta_f_brake = (transfer_long_total * weight_frac) / 2 # Ponderado por peso eje
+    else:
+        delta_f_brake = - (transfer_long_total * weight_frac) / 2 
+
+    # --- CORRECCIÓN 1: TRANSFERENCIA LATERAL (RUEDA EXTERNA) ---
+    # Fórmula corregida: 2 * (masa_esquina) * ... para simular rueda externa pura
+    transfer_lat = 2 * (ms + inputs_eje["mu_kg"]) * vehiculo["g_lat"] * vehiculo["g_gravedad"] * vehiculo["altura_cg_m"] / vehiculo["ancho_via_m"]
+    
+    delta_f_corner = transfer_lat # Asignación directa (Rueda Externa)
+
+    f_total_rueda = f_static + delta_f_brake + delta_f_corner
+    f_suspension = f_total_rueda * (kw_spring / (kw_spring + k_tire))
+    f_damper_total = f_suspension / mr_damper
+
+    # --- CORRECCIÓN 3: USO DE ARB (ELIMINADA DE RECORRIDO 1/4) ---
+    travel_static_wheel = f_static / kw_spring
+    
+    # En modelo 1/4 (heave puro), la ARB no resiste. Solo actúa el resorte.
+    travel_dynamic_wheel = (delta_f_brake / kw_spring) + (delta_f_corner / kw_spring)
+    
+    travel_total_wheel = travel_static_wheel + travel_dynamic_wheel
+    travel_damper_mm = travel_total_wheel * mr_damper * 1000
+    margen_bloqueo = (inputs_eje["resorte_l_libre_mm"] - travel_damper_mm) - inputs_eje["resorte_l_solido_mm"]
+
+    # 5. Amortiguación y Frecuencias
+    k_ride = (kw_spring * k_tire) / (kw_spring + k_tire)
+    wn = math.sqrt(k_ride / ms)
+    fn = wn / (2 * np.pi)
+    
+    # --- CORRECCIÓN 4: AMORTIGUACIÓN CRÍTICA CON K_RIDE ---
+    # Usamos k_ride para consistencia con wn
+    c_crit_wheel = 2 * math.sqrt(k_ride * ms)
+    
+    c_reb_shaft = (inputs_eje["zeta_rebound"] * c_crit_wheel) / (mr_damper**2)
+    c_comp_shaft = (inputs_eje["zeta_compression"] * c_crit_wheel) / (mr_damper**2)
+
+    vels = np.linspace(0, inputs_eje["v_max_plot"], 50)
+    f_reb_plot = c_reb_shaft * vels
+    f_comp_plot = -c_comp_shaft * vels
+
+    return {
+        "ms": ms, 
+        "mu": inputs_eje["mu_kg"], 
+        "mr_damper": mr_damper,
+        "kw_spring": kw_spring, 
+        "kw_arb": kw_arb, 
+        "k_tire": k_tire, 
+        "fn": fn,
+        "downforce_por_rueda": downforce_por_rueda, 
+        "f_total_rueda": f_total_rueda,
+        "f_suspension": f_suspension, 
+        "f_damper_total": f_damper_total,
+        "k_ride": k_ride, 
+        "travel_total_wheel": travel_total_wheel,
+        "travel_damper_mm": travel_damper_mm, 
+        "margen_bloqueo": margen_bloqueo,
+        "c_reb_shaft": c_reb_shaft, 
+        "c_comp_shaft": c_comp_shaft,
+        "vels": vels, 
+        "f_reb_plot": f_reb_plot, 
+        "f_comp_plot": f_comp_plot,
+        "inputs": inputs_eje
+    }
+
+# =============================================================================
+#  BLOQUE 3: FUNCIONES DE IMPRESIÓN Y GRÁFICOS
+# =============================================================================
+
+def imprimir_reporte(res, nombre_eje):
+    v_low, v_high = 0.051, 0.254
+    print(f"\n{'='*40}\n RESULTADOS EJE: {nombre_eje}\n{'='*40}")
+    print(" ESPECIFICACIÓN DE VALVING (DYNO CARD)")
+    print("-" * 40)
+    print(f"Coeficiente Rebound (Shaft):  {res['c_reb_shaft']:.1f} Ns/m")
+    print(f"Coeficiente Comp (Shaft):     {res['c_comp_shaft']:.1f} Ns/m")
+    print("-" * 30)
+    print(f"PUNTO A (2 in/s): Reb: {res['c_reb_shaft']*v_low:.0f} N | Comp: {res['c_comp_shaft']*v_low:.0f} N")
+    print(f"PUNTO B (10 in/s): Reb: {res['c_reb_shaft']*v_high:.0f} N | Comp: {res['c_comp_shaft']*v_high:.0f} N")
+    
+    print("\n" + "="*65)
+    print("REPORTE DE DINÁMICA - FSAE (EXTREME LOAD CASE)")
+    print("="*65)
+    print(f"Masa susp. (esquina):    {res['ms']:.1f} kg")
+    print(f"Motion Ratio (Damper):   {res['mr_damper']:.3f}")
+    print(f"Frecuencia Natural:      {res['fn']:.2f} Hz")
+    print("-" * 30)
+    print(f"Spring Rate (Rueda):     {res['kw_spring']/1000:.2f} N/mm")
+    print(f"Ride Rate (Total):       {res['k_ride']/1000:.2f} N/mm")
+    print(f"Recorrido Damper Total:  {res['travel_damper_mm']:.1f} mm")
+    print(f"Margen al Coil Bind:     {res['margen_bloqueo']:.1f} mm")
+    if res['margen_bloqueo'] < 5: print(">>> ALERTA: RIESGO DE BLOQUEO <<<")
+    print("="*65)
+
+def graficar_fvv_comparativo(res_f, res_r):
+    plt.figure(figsize=(10,6))
+    plt.plot(res_f['vels']*1000, res_f['f_reb_plot'], 'r-', linewidth=2, label='Delantero Reb')
+    plt.plot(res_f['vels']*1000, res_f['f_comp_plot'], 'r--', linewidth=2, label='Delantero Comp')
+    plt.plot(res_r['vels']*1000, res_r['f_reb_plot'], 'b-', linewidth=2, label='Trasero Reb')
+    plt.plot(res_r['vels']*1000, res_r['f_comp_plot'], 'b--', linewidth=2, label='Trasero Comp')
+    plt.title("Comparativa Amortiguación: Delantero vs Trasero")
+    plt.xlabel("Velocidad Vástago (mm/s)"); plt.ylabel("Fuerza (N)")
+    plt.axhline(0, color='k'); plt.grid(True, linestyle='--'); plt.legend()
+    plt.show()
+
+# =============================================================================
+#  BLOQUE 4: MOTOR DE SIMULACIÓN TRANSITORIA
+# =============================================================================
+
+def simular_eje_transitorio(res_data, road_function, t_end=2.0):
+    ms = res_data['ms']
+    mu = res_data['mu']
+    kw = res_data['kw_spring'] # SOLO RESORTE (ARB DESACOPLADA EN 1/4)
+    kt = res_data['k_tire']
+    MR = res_data['mr_damper']
+    
+    c_reb_wheel = res_data['c_reb_shaft'] * (MR**2)
+    c_comp_wheel = res_data['c_comp_shaft'] * (MR**2)
+
+    def eom(t, z):
+        xs, xsd, xu, xud = z
+        y = road_function(t)
+        vel_rel = xsd - xud
+        c_inst = c_reb_wheel if vel_rel > 0 else c_comp_wheel
+        
+        xsd_dot = (-kw*(xs-xu) - c_inst*(xsd-xud)) / ms
+        xud_dot = (kw*(xs-xu) + c_inst*(xsd-xud) - kt*(xu-y)) / mu
+        return [xsd, xsd_dot, xud, xud_dot]
+
+    t_eval = np.linspace(0, t_end, 2000)
+    sol = solve_ivp(eom, (0, t_end), [0,0,0,0], t_eval=t_eval, method='RK45')
+
+    travel_wheel = sol.y[0] - sol.y[2]
+    travel_damper_mm = travel_wheel * MR * 1000
+    road_ref_damper_mm = np.array([road_function(t) for t in sol.t]) * MR * 1000
+    
+    return sol.t, travel_damper_mm, road_ref_damper_mm
+
+# =============================================================================
+#  BLOQUE 5: GRÁFICOS TRANSITORIOS
+# =============================================================================
+
+def graficar_simulacion_completa(sim_bache, sim_piano, nombre_eje):
+    t_b, trav_b, road_b = sim_bache
+    t_p, trav_p, road_p = sim_piano
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig.suptitle(f"Análisis Transitorio - Eje {nombre_eje}", fontsize=14, fontweight='bold')
+
+    ax1.plot(t_b, road_b, linestyle='--', color='gray', alpha=0.5, label='Perfil Suelo (Ref. Damper)')
+    ax1.plot(t_b, trav_b, color='#e74c3c', linewidth=2.5, label='Recorrido Amortiguador')
+    ax1.set_title(f"Respuesta ante Bache ({h_bache}m)")
+    ax1.set_xlabel("Tiempo [s]"); ax1.set_ylabel("Recorrido [mm]")
+    ax1.set_xlim(0, t_b[-1]); ax1.grid(True, alpha=0.3)
+    ax1.legend(); ax1.axhline(0, color='black', linewidth=1)
+
+    ax2.plot(t_p, road_p, linestyle='--', color='gray', alpha=0.5, label='Perfil Piano (Ref.)')
+    ax2.plot(t_p, trav_p, color='#3498db', linewidth=2, label='Recorrido Amortiguador')
+    ax2.set_title(f"Respuesta en Piano ({pitch}m pitch) – Análisis Packing")
+    ax2.set_xlabel("Tiempo [s]"); ax2.set_ylabel("Recorrido [mm]")
+    ax2.set_xlim(0, t_p[-1]); ax2.grid(True, alpha=0.3)
+    ax2.legend(); ax2.axhline(0, color='black', linewidth=1)
+
+    minimos = np.minimum.accumulate(trav_p)
+    idx_start = np.argmax(t_p > 0.5) 
+    packing_mm = minimos[-1] - minimos[idx_start]
+
+    if packing_mm < -3.0:
+        txt = (f"PACKING DETECTADO\nDesplazamiento: {packing_mm:.1f} mm\n(Rebound excesivo)")
+        ax2.text(0.5, 0.05, txt, transform=ax2.transAxes, ha='center', va='bottom',
+                 color='red', fontweight='bold', bbox=dict(facecolor='white', alpha=0.8, edgecolor='red'))
+
+    plt.tight_layout()
+    plt.show()
+
+# =============================================================================
+#  EJECUCIÓN PRINCIPAL
+# =============================================================================
+if __name__ == "__main__":
+    print("Calculando parámetros estáticos...")
+    res_f = calcular_dinamica_eje(front_inputs, vehiculo_global, True)
+    res_r = calcular_dinamica_eje(rear_inputs, vehiculo_global, False)
+
+    # 1. Reportes de Texto
+    imprimir_reporte(res_f, "DELANTERO")
+    imprimir_reporte(res_r, "TRASERO")
+    
+    # 2. Gráfico F-v-V Comparativo
+    graficar_fvv_comparativo(res_f, res_r)
+
+    # 3. Simulaciones y Gráficos Transitorios
+    print("\nEjecutando simulación DELANTERA...")
+    sim_f_bache = simular_eje_transitorio(res_f, road_bache)
+    sim_f_piano = simular_eje_transitorio(res_f, road_piano)
+    graficar_simulacion_completa(sim_f_bache, sim_f_piano, "DELANTERO")
+
+    print("Ejecutando simulación TRASERA...")
+    sim_r_bache = simular_eje_transitorio(res_r, road_bache)
+    sim_r_piano = simular_eje_transitorio(res_r, road_piano)
+    graficar_simulacion_completa(sim_r_bache, sim_r_piano, "TRASERO")
+
+    # =============================================================================
+    #  BLOQUE EXTRA: CÁLCULO DE RIGIDEZ DE ROLIDO Y BALANCE (LLTD)
+    # =============================================================================
+
+    print("\n" + "="*65)
+    print(" CÁLCULO DE BALANCE (Rigidez de Rolido)")
+    print("="*65)
+
+    # 1. Recuperar datos calculados
+    kw_spring_del = res_f['kw_spring']
+    kw_arb_del = res_f.get('kw_arb', 0)
+    
+    kw_spring_tra = res_r['kw_spring']
+    kw_arb_tra = res_r.get('kw_arb', 0)
+
+    # Geometría
+    track_del = vehiculo_global['ancho_via_m']
+    track_tra = vehiculo_global['ancho_via_m']
+    
+    # Masas (Recalculadas para reporte)
+    mu_del_ref = front_inputs["mu_kg"]
+    mu_tra_ref = rear_inputs["mu_kg"]
+    masa_susp_total = vehiculo_global['peso_total_kg'] - (2*mu_del_ref) - (2*mu_tra_ref)
+    
+    masa_del_susp = masa_susp_total * ((vehiculo_global['dist_ejes_m'] - vehiculo_global['dist_cg_del_m']) / vehiculo_global['dist_ejes_m'])
+    masa_tra_susp = masa_susp_total - masa_del_susp
+
+    # 2. Cálculo de Rigidez de Rolido (K_roll) [Nm/rad]
+    kroll_spring_del = (kw_spring_del * track_del**2) / 2
+    kroll_arb_del    = (kw_arb_del * track_del**2) / 2
+    kroll_total_del  = kroll_spring_del + kroll_arb_del
+
+    kroll_spring_tra = (kw_spring_tra * track_tra**2) / 2
+    kroll_arb_tra    = (kw_arb_tra * track_tra**2) / 2
+    kroll_total_tra  = kroll_spring_tra + kroll_arb_tra
+
+    kroll_total_vehiculo = kroll_total_del + kroll_total_tra
+
+    # 3. Distribución (LLTD)
+    roll_dist_front = kroll_total_del / kroll_total_vehiculo
+
+    # 4. Diagnóstico
+    if roll_dist_front > 0.55:
+        balance_msg = "Tendencia a SUBVIRAJE (Front Stiff - Seguro)"
+    elif roll_dist_front < 0.45:
+        balance_msg = "Tendencia a SOBREVIRAJE (Rear Stiff - Ágil)"
+    else:
+        balance_msg = "Balance NEUTRAL (Zona Típica FSAE)"
+
+    # 5. Imprimir Reporte
+    print(f"Masa Susp. Eje Del:       {masa_del_susp:.1f} kg ({(masa_del_susp/masa_susp_total)*100:.1f}%)")
+    print(f"Masa Susp. Eje Tra:       {masa_tra_susp:.1f} kg")
+    print("-" * 45)
+    print(f"Rigidez Rolido DELANTERA: {kroll_total_del:.1f} Nm/rad")
+    print(f"   > Aporte Resortes:     {kroll_spring_del:.1f} Nm/rad")
+    print(f"   > Aporte ARB:          {kroll_arb_del:.1f} Nm/rad")
+    print("-" * 45)
+    print(f"Rigidez Rolido TRASERA:   {kroll_total_tra:.1f} Nm/rad")
+    print(f"   > Aporte Resortes:     {kroll_spring_tra:.1f} Nm/rad")
+    print(f"   > Aporte ARB:          {kroll_arb_tra:.1f} Nm/rad")
+    print("=" * 65)
+    print(f"RIGIDEZ TOTAL CHASIS:     {kroll_total_vehiculo:.1f} Nm/rad")
+    print(f"DISTRIBUCIÓN DELANTERA:   {roll_dist_front*100:.2f} %")
+    print(f"DIAGNÓSTICO:              {balance_msg}")
+    print("=" * 65)
