@@ -377,8 +377,41 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
+    
+
+        /* --- NUEVO: ESTILOS FIREBASE HARDPOINTS --- */
+        .history-panel { background: #fdf0d5; padding: 10px; border-radius: 6px; margin-top: 15px; border: 1px solid #f39c12; }
+        .history-item { background: #fff; padding: 8px; border-radius: 4px; border-left: 4px solid #f39c12; margin-bottom: 8px; font-size: 0.8rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .history-item:hover { background: #fdfdfd; transform: translateX(2px); transition: 0.2s; }
+        .history-date { font-weight: bold; color: #d35400; margin-bottom: 4px; display: block; }
+        .history-details { display: none; margin-top: 5px; color: #555; border-top: 1px dashed #ccc; padding-top: 5px; }
     </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuRvqTwKVGRU4m8GgfyCQGJLidbTexn58",
+            authDomain: "fsae-presentismo.firebaseapp.com",
+            projectId: "fsae-presentismo",
+            storageBucket: "fsae-presentismo.firebasestorage.app",
+            messagingSenderId: "294700732556",
+            appId: "1:294700732556:web:122fb5e540c49d745f2ba9"
+        };
+
+        const app = window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.query = query;
+        window.orderBy = orderBy;
+    </script>
+
 </head>
+
+
 <body>
 
     <div class="brand-bar">
@@ -416,6 +449,17 @@
             </div>
             <div id="active-inputs-container" class="input-group"></div>
 
+            <div id="active-inputs-container" class="input-group"></div>
+
+            <button class="st-btn" style="background:#f39c12; margin-top:5px; padding:8px;" onclick="guardarHardpointsFirebase()">☁️ GUARDAR HARDPOINTS (FRONT & REAR)</button>
+            
+            <div class="history-panel">
+                <h4 style="margin:0 0 10px 0; color:#d35400;">Historial de Versiones</h4>
+                <button onclick="cargarHistorialFirebase()" style="width:100%; padding:4px; font-size:0.75rem; margin-bottom:10px;">Cargar Historial</button>
+                <div id="firebase-history-list"></div>
+            </div>
+            
+
             <span class="section-header">PARÁMETROS DEL VEHÍCULO</span>
             <div class="input-group">
                 <h4>Dinámica</h4>
@@ -423,8 +467,13 @@
                 <div class="row"><label>G Aceleración:</label><input type="number" id="g_accel" value="1.2" step="0.1"></div>
                 <div class="row"><label>G Lateral:</label><input type="number" id="g_cornering" value="2.0" step="0.1"></div>
                 <div class="row"><label>G Bump:</label><input type="number" id="g_bump" value="3.0" step="0.1"></div>
-                <div class="row"><label>Mu Lng/Lat:</label><div class="coord-inputs"><input type="number" id="mu_long" value="1.0" step="0.1"><input type="number" id="mu_lat" value="1.0" step="0.1"></div></div>
 
+                <div class="note" style="margin-bottom: 8px; line-height: 1.4; color: #d35400;">
+                    <strong>1.0</strong> = Suelo liso (1G Estático)<br>
+                    <strong>0.0</strong> = Ingravidez (Aire)<br>
+                    <strong>>1.0</strong> = Compresión (Bache/Aterrizaje)
+                </div>
+<div class="row"><label>Mu Lng/Lat:</label><div class="coord-inputs"><input type="number" id="mu_long" value="1.0" step="0.1"><input type="number" id="mu_lat" value="1.0" step="0.1"></div></div>
                 <h4>Dimensiones y Masa</h4>
                 <div class="row"><label>Wheelbase (mm):</label><input type="number" id="wheelbase" value="1650"></div>
                 <div class="row"><label>Trocha Del. (mm):</label><input type="number" id="track_front" value="1200"></div>
@@ -803,7 +852,7 @@
 
             <div class="st-row"><label>Masa No Susp (Esq):</label><input type="number" id="rr_mu" value="16.0"></div>
             <div class="st-row"><label>K Tire (N/mm):</label><input type="number" id="rr_ktire" value="100.0"></div>
-            <div class="st-row"><label>K Resorte (lbs/in):</label><input type="number" id="rr_kspring" value="500"></div>
+            <div class="st-row"><label>K Resorte (lbs/in):</label><input type="number" id="rr_kspring" value="300"></div>
             <div class="st-row"><label>L. Libre / Solido:</label>
                 <div class="coord-inputs"><input type="number" id="rr_lfree" value="115"><input type="number" id="rr_lsolid" value="57"></div>
             </div>
@@ -840,7 +889,7 @@
             <div style="border-left: 2px solid #c0392b; padding-left:5px; margin: 5px 0;">
                 <div class="st-row"><label>Mod. Rigidez ARB - G(Pa):</label><input type="number" id="rr_arb_g" value="80e9" style="font-size:0.8rem;"></div>
                 <div class="st-row"><label>ARB Outer D/Inner D (mm):</label>
-                    <div class="coord-inputs"><input type="number" id="rr_arb_od" value="11"><input type="number" id="rr_arb_id" value="0"></div>
+                    <div class="coord-inputs"><input type="number" id="rr_arb_od" value="12"><input type="number" id="rr_arb_id" value="0"></div>
                 </div>
                 <div class="st-row"><label style="color:#d35400;">L. Activa ARB (m):</label><input type="number" id="rr_arb_l_activa" value="0.300"></div>
                 <div class="note" id="rr_arb_note_dist">Nota: En modo 'Distancias', se usa el Ancho como L Activa.</div>
@@ -888,6 +937,96 @@
     // ==========================================
     // LOGICA DE PESTAÑAS Y NAVEGACION
     // ==========================================
+
+// ==========================================
+    // NUEVO: LOGICA FIREBASE PARA HARDPOINTS
+    // ==========================================
+    async function guardarHardpointsFirebase() {
+        const btn = event.target;
+        btn.innerText = "Guardando...";
+        
+        try {
+            // Se guardan los Front y Rear juntos sacándolos de tu variable global vehicleData
+            const dataToSave = {
+                fecha: new Date().toLocaleString('es-AR'),
+                timestamp: Date.now(),
+                hardpoints_front: vehicleData.front,
+                hardpoints_rear: vehicleData.rear
+            };
+
+            await window.addDoc(window.collection(window.db, "fsae_hardpoints"), dataToSave);
+            alert("¡Hardpoints Front y Rear guardados en Firebase con éxito!");
+            cargarHistorialFirebase(); // Recargar la lista
+        } catch (e) {
+            console.error("Error al guardar: ", e);
+            alert("Error al guardar en Firebase. Revisá la consola.");
+        } finally {
+            btn.innerText = "☁️ GUARDAR HARDPOINTS (FRONT & REAR)";
+        }
+    }
+
+    async function cargarHistorialFirebase() {
+        const listDiv = document.getElementById('firebase-history-list');
+        listDiv.innerHTML = "Cargando...";
+
+        try {
+            const q = window.query(window.collection(window.db, "fsae_hardpoints"), window.orderBy("timestamp", "desc"));
+            const querySnapshot = await window.getDocs(q);
+            
+            listDiv.innerHTML = "";
+            if(querySnapshot.empty) {
+                listDiv.innerHTML = "<i>No hay hardpoints guardados.</i>";
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // Acortamos los nombres de las variables para que el código quede más limpio
+                const f = data.hardpoints_front;
+                const r = data.hardpoints_rear;
+
+                const htmlItem = `
+                <div class="history-item" onclick="this.querySelector('.history-details').style.display = this.querySelector('.history-details').style.display === 'block' ? 'none' : 'block'">
+                    <span class="history-date">📅 ${data.fecha}</span>
+                    <span>Hacé clic para ver todas las coordenadas...</span>
+                    <div class="history-details" style="font-family: monospace; font-size: 0.75rem; line-height: 1.4;">
+                        <b style="color:#d35400;">FRONT [X, Y, Z]:</b><br>
+                        Centro Rueda: [${f.tire_center.join(', ')}]<br>
+                        LWB Chas F: &nbsp;&nbsp;[${f.lwb_f.join(', ')}]<br>
+                        LWB Chas R: &nbsp;&nbsp;[${f.lwb_r.join(', ')}]<br>
+                        LWB Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${f.lwb_u.join(', ')}]<br>
+                        UWB Chas F: &nbsp;&nbsp;[${f.uwb_f.join(', ')}]<br>
+                        UWB Chas R: &nbsp;&nbsp;[${f.uwb_r.join(', ')}]<br>
+                        UWB Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${f.uwb_u.join(', ')}]<br>
+                        Push Chas: &nbsp;&nbsp;&nbsp;[${f.push_c.join(', ')}]<br>
+                        Push Uprt: &nbsp;&nbsp;&nbsp;[${f.push_u.join(', ')}]<br>
+                        Tie Chas: &nbsp;&nbsp;&nbsp;&nbsp;[${f.tie_c.join(', ')}]<br>
+                        Tie Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${f.tie_u.join(', ')}]<br>
+                        Pneu. Trail: &nbsp;${f.p_trail_mm} mm<br><br>
+
+                        <b style="color:#c0392b;">REAR [X, Y, Z]:</b><br>
+                        Centro Rueda: [${r.tire_center.join(', ')}]<br>
+                        LWB Chas F: &nbsp;&nbsp;[${r.lwb_f.join(', ')}]<br>
+                        LWB Chas R: &nbsp;&nbsp;[${r.lwb_r.join(', ')}]<br>
+                        LWB Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${r.lwb_u.join(', ')}]<br>
+                        UWB Chas F: &nbsp;&nbsp;[${r.uwb_f.join(', ')}]<br>
+                        UWB Chas R: &nbsp;&nbsp;[${r.uwb_r.join(', ')}]<br>
+                        UWB Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${r.uwb_u.join(', ')}]<br>
+                        Push Chas: &nbsp;&nbsp;&nbsp;[${r.push_c.join(', ')}]<br>
+                        Push Uprt: &nbsp;&nbsp;&nbsp;[${r.push_u.join(', ')}]<br>
+                        Toe Chas: &nbsp;&nbsp;&nbsp;&nbsp;[${r.tie_c.join(', ')}]<br>
+                        Toe Uprt: &nbsp;&nbsp;&nbsp;&nbsp;[${r.tie_u.join(', ')}]<br>
+                        Pneu. Trail: &nbsp;${r.p_trail_mm} mm
+                    </div>
+                </div>`;
+                listDiv.innerHTML += htmlItem;
+            });
+        } catch (e) {
+            console.error("Error al cargar historial: ", e);
+            listDiv.innerHTML = "Error al cargar historial.";
+        }
+    }
+
     function showApp(appName, tabElement) {
         // Ocultar todos los contenedores
         document.getElementById('app-container-v5').style.display = 'none';
@@ -3654,5 +3793,4 @@
     setTimeout(calculateAndPlot, 800);
 </script>
 </body>
-
 </html>
