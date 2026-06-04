@@ -934,10 +934,6 @@
 
 <script>    
 
-    // ==========================================
-    // LOGICA DE PESTAÑAS Y NAVEGACION
-    // ==========================================
-
 // ==========================================
     // NUEVO: LOGICA FIREBASE PARA HARDPOINTS
     // ==========================================
@@ -965,6 +961,9 @@
         }
     }
 
+    // Objeto global para cachear temporalmente los datos descargados de Firebase
+    window.historialHardpoints = {};
+
     async function cargarHistorialFirebase() {
         const listDiv = document.getElementById('firebase-history-list');
         listDiv.innerHTML = "Cargando...";
@@ -979,17 +978,26 @@
                 return;
             }
 
+            window.historialHardpoints = {}; // Limpiamos la caché antes de rellenar
+
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                // Acortamos los nombres de las variables para que el código quede más limpio
+                // Guardamos los datos en la caché usando el ID del documento
+                window.historialHardpoints[doc.id] = data;
+
                 const f = data.hardpoints_front;
                 const r = data.hardpoints_rear;
 
+                // Modificamos el onclick para que solo despliegue si NO se hizo clic en el botón de Cargar
                 const htmlItem = `
-                <div class="history-item" onclick="this.querySelector('.history-details').style.display = this.querySelector('.history-details').style.display === 'block' ? 'none' : 'block'">
-                    <span class="history-date">📅 ${data.fecha}</span>
-                    <span>Hacé clic para ver todas las coordenadas...</span>
-                    <div class="history-details" style="font-family: monospace; font-size: 0.75rem; line-height: 1.4;">
+                <div class="history-item" onclick="if(event.target.tagName !== 'BUTTON') { this.querySelector('.history-details').style.display = this.querySelector('.history-details').style.display === 'block' ? 'none' : 'block' }">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span class="history-date">📅 ${data.fecha}</span>
+                        <button onclick="event.stopPropagation(); cargarVersionEnSimulador('${doc.id}')" style="background: #27ae60; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">Cargar v</button>
+                    </div>
+                    <span style="color: #666; font-size: 0.75rem;">Hacé clic para expandir coordenadas...</span>
+                    
+                    <div class="history-details" style="display: none; font-family: monospace; font-size: 0.75rem; line-height: 1.4; margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 5px;">
                         <b style="color:#d35400;">FRONT [X, Y, Z]:</b><br>
                         Centro Rueda: [${f.tire_center.join(', ')}]<br>
                         LWB Chas F: &nbsp;&nbsp;[${f.lwb_f.join(', ')}]<br>
@@ -1025,6 +1033,35 @@
             console.error("Error al cargar historial: ", e);
             listDiv.innerHTML = "Error al cargar historial.";
         }
+    }
+
+    // NUEVA FUNCIÓN: Ejecuta la carga automática de datos en el simulador
+    function cargarVersionEnSimulador(id) {
+        if (!window.historialHardpoints || !window.historialHardpoints[id]) {
+            alert("No se encontraron los datos de esta versión en la caché.");
+            return;
+        }
+
+        const data = window.historialHardpoints[id];
+
+        // 1. Sobreescribimos el objeto global que usa el simulador haciendo una copia limpia
+        vehicleData.front = JSON.parse(JSON.stringify(data.hardpoints_front));
+        vehicleData.rear = JSON.parse(JSON.stringify(data.hardpoints_rear));
+
+        // 2. Sincronizamos con el localStorage para que persista a nivel local por si se cierra la pestaña
+        if (typeof guardarLocal === "function") {
+            guardarLocal();
+        } else {
+            localStorage.setItem('fsae_hardpoints_local', JSON.stringify(vehicleData));
+        }
+
+        // 3. Volvemos a renderizar los cuadros de texto (inputs) numéricos en pantalla
+        renderInputs();
+
+        // 4. Forzamos la actualización completa del modelo matemático y el rediseño de las vistas 3D y reportes
+        calculateAndPlot();
+
+        alert("¡Geometría importada con éxito! El simulador y los inputs fueron actualizados.");
     }
 
     function showApp(appName, tabElement) {
