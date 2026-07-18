@@ -2583,31 +2583,60 @@
             <div class="note" style="color:#aaa; margin-top:5px;">* Nota: La fuerza es tangente al disco (eje Z si caliper a las 3/9 o'clock).</div>
         </div>`;
 
-        html += `
+       html += `
         <div class="result-block">
-            <h3>2. FUERZAS EN HARDPOINTS (Vectores)</h3>
-            <table>
+            <h3 style="color:#f39c12;">2. DATOS PARA SOLIDWORKS (Cargas Netas en Rótulas)</h3>
+            <table style="font-size: 0.85rem;">
                 <tr>
-                    <th>Punto (Hardpoint)</th>
-                    <th>Mag (N)</th>
-                    <th>Vector [Fx, Fy, Fz]</th>
+                    <th>Rótula (Hardpoint)</th>
+                    <th>Coord. Portamasa [X, Y, Z]</th>
+                    <th>Fuerza Neta [Fx, Fy, Fz] (N)</th>
                 </tr>`;
 
-        linkDefs.forEach(link => {
+        // Función auxiliar para calcular las componentes de un vector individual
+        const getVec = (link) => {
             const vRaw = sub(link.pChas, link.pUprt);
             const vUnit = normalize(vRaw);
-            const fx = vUnit[0] * link.force;
-            const fy = vUnit[1] * link.force;
-            const fz = vUnit[2] * link.force;
-            const color = link.force < 0 ? col('color_comp') : col('color_tens');
+            return [vUnit[0] * link.force, vUnit[1] * link.force, vUnit[2] * link.force];
+        };
 
-            html += `
+        // Extraer los 6 vectores
+        const v_lwb_f = getVec(linkDefs[0]);
+        const v_lwb_r = getVec(linkDefs[1]);
+        const v_uwb_f = getVec(linkDefs[2]);
+        const v_uwb_r = getVec(linkDefs[3]);
+        const v_push  = getVec(linkDefs[4]);
+        const v_tie   = getVec(linkDefs[5]);
+
+        // SUMA VECTORIAL: Juntar ramas frontales y traseras en el mismo nodo
+        const f_lwb_net = [
+            v_lwb_f[0] + v_lwb_r[0], 
+            v_lwb_f[1] + v_lwb_r[1], 
+            v_lwb_f[2] + v_lwb_r[2]
+        ];
+        
+        const f_uwb_net = [
+            v_uwb_f[0] + v_uwb_r[0], 
+            v_uwb_f[1] + v_uwb_r[1], 
+            v_uwb_f[2] + v_uwb_r[2]
+        ];
+
+        // Función para imprimir cada fila sumada
+        const printRow = (name, pUprt, fVec) => {
+            return `
                 <tr>
-                    <td>${link.name}</td>
-                    <td style="color:${color}; font-weight:bold;">${link.force.toFixed(0)}</td>
-                    <td class="vector-cell">[${fx.toFixed(0)}, ${fy.toFixed(0)}, ${fz.toFixed(0)}]</td>
+                    <td style="font-weight:bold; color:#fff;">${name}</td>
+                    <td style="font-family:monospace; color:#a8dadc;">[${pUprt[0].toFixed(3)}, ${pUprt[1].toFixed(3)}, ${pUprt[2].toFixed(3)}]</td>
+                    <td class="vector-cell" style="color:#06d6a0;">[${fVec[0].toFixed(0)}, ${fVec[1].toFixed(0)}, ${fVec[2].toFixed(0)}]</td>
                 </tr>`;
-        });
+        };
+
+        // Imprimir solo los 4 nodos reales del portamasa
+        html += printRow("Lower Wishbone (Rótula Inf.)", linkDefs[0].pUprt, f_lwb_net);
+        html += printRow("Upper Wishbone (Rótula Sup.)", linkDefs[2].pUprt, f_uwb_net);
+        html += printRow("Pushrod Mount", linkDefs[4].pUprt, v_push);
+        html += printRow("Tie Rod Mount", linkDefs[5].pUprt, v_tie);
+
         html += `</table></div>`;
 
         html += `
